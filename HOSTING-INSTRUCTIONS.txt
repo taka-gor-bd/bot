@@ -1,0 +1,55 @@
+🎉 EarnBot Web App - Hosting Instructions
+
+I've created a complete standalone web app file for you: 'earnbot-webapp.html'
+
+📋 WHAT TO DO:
+
+1. GITHUB PAGES HOSTING (FREE):
+   - Create a GitHub account (if you don't have one)
+   - Create a new repository called "earnbot-webapp"
+   - Upload the 'earnbot-webapp.html' file
+   - Rename it to 'index.html' 
+   - Go to repository Settings > Pages
+   - Select "Deploy from a branch" > main branch
+   - Your URL will be: https://YOUR_USERNAME.github.io/earnbot-webapp
+
+2. INFINITY FREE HOSTING:
+   - Sign up at infinityfree.net
+   - Create a new website
+   - Upload 'earnbot-webapp.html' to public_html folder
+   - Rename it to 'index.html'
+   - Your URL will be: http://YOUR_SUBDOMAIN.infinityfreeapp.com
+
+3. OTHER FREE HOSTING OPTIONS:
+   - Netlify: Just drag and drop the HTML file
+   - Vercel: Upload and deploy instantly
+   - Surge.sh: Simple command line deployment
+
+🔧 AFTER HOSTING:
+
+1. Copy your new website URL (example: https://yoursite.github.io)
+2. Go to @BotFather on Telegram
+3. Send: /setmenubutton
+4. Choose your bot: TAKA Gor BD
+5. Button text: 🚀 Open App  
+6. Web App URL: [PASTE YOUR WEBSITE URL HERE]
+
+📱 FEATURES INCLUDED:
+
+✅ Points system (working with Firebase)
+✅ Ad watching with countdown timer
+✅ Referral link sharing
+✅ Task completion system  
+✅ Real-time stats update
+✅ Beautiful Telegram-themed design
+✅ Mobile responsive
+✅ Firebase integration for data persistence
+
+🎯 NEXT STEPS:
+
+1. Host the file using any method above
+2. Update BotFather with your new URL
+3. Replace 'YourBotUsername' in the HTML with your actual bot username
+4. Test the bot and web app
+
+The web app is ready to use immediately after hosting! 🚀
