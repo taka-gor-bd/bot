@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>EarnHub - Login / Register</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --primary-color: #6a11cb;
+      --secondary-color: #2575fc;
+      --dark-bg: #0d0d0d;
+      --card-bg: #1c1c1e;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --input-bg: #2a2a2e;
+      --red-color: #ff3b30;
+      --green-color: #34c759;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-primary);
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .container {
+      width: 100%; max-width: 400px; background-color: var(--card-bg);
+      border-radius: 20px; padding: 30px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    }
+    .logo {
+      font-size: 32px; font-weight: 800; margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .form-container { margin-top: 20px; }
+    .form-container.hidden { display: none; }
+    .form-container h2 { font-size: 24px; font-weight: 600; margin-bottom: 20px; }
+    .input-group { position: relative; margin-bottom: 20px; }
+    .input-group input {
+      width: 100%; padding: 15px 15px 15px 45px; background-color: var(--input-bg);
+      border: 1px solid #3c3c3e; border-radius: 12px; color: var(--text-primary); font-size: 16px; transition: border-color .3s;
+    }
+    .input-group input:focus { outline: none; border-color: var(--primary-color); }
+    .input-group .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+    .btn {
+      width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: none; border-radius: 12px; color: var(--text-primary); font-size: 18px; font-weight: 600; cursor: pointer; transition: transform .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .toggle-form-link { margin-top: 20px; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
+    .toggle-form-link a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+    .message { margin-top: 20px; font-size: 14px; font-weight: 500; }
+    .message.error { color: var(--red-color); }
+    .message.success { color: var(--green-color); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="logo">EarnHub</h1>
+
+    <div id="login-form-container" class="form-container">
+      <h2>লগইন করুন</h2>
+      <form id="login-form">
+        <div class="input-group">
+          <i class="fas fa-envelope icon"></i>
+          <input type="email" id="login-email" placeholder="ইমেইল" required>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock icon"></i>
+          <input type="password" id="login-password" placeholder="পাসওয়ার্ড" required>
+        </div>
+        <button type="submit" class="btn">লগইন</button>
+      </form>
+      <p class="toggle-form-link">অ্যাকাউন্ট নেই? <a href="#" id="show-register">রেজিস্টার করুন</a></p>
+    </div>
+
+    <div id="register-form-container" class="form-container hidden">
+      <h2>রেজিস্টার করুন</h2>
+      <form id="register-form">
+        <div class="input-group">
+          <i class="fas fa-user icon"></i>
+          <input type="text" id="register-name" placeholder="নাম" required>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-envelope icon"></i>
+          <input type="email" id="register-email" placeholder="ইমেইল" required>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock icon"></i>
+          <input type="password" id="register-password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" required>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-share-nodes icon"></i>
+          <input type="text" id="referral-code" placeholder="রেফার কোড (ঐচ্ছিক)">
+        </div>
+        <button type="submit" class="btn">রেজিস্টার</button>
+      </form>
+      <p class="toggle-form-link">ইতিমধ্যে একটি অ্যাকাউন্ট আছে? <a href="#" id="show-login">লগইন করুন</a></p>
+    </div>
+    <p id="message-text" class="message"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, get, push, orderByChild, equalTo, query, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // Firebase config (same as your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    // DOM
+    const loginFormContainer = document.getElementById('login-form-container');
+    const registerFormContainer = document.getElementById('register-form-container');
+    const showRegisterLink = document.getElementById('show-register');
+    const showLoginLink = document.getElementById('show-login');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const messageText = document.getElementById('message-text');
+
+    // Toggle
+    showRegisterLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginFormContainer.classList.add('hidden');
+      registerFormContainer.classList.remove('hidden');
+      messageText.textContent = '';
+    });
+    showLoginLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      registerFormContainer.classList.add('hidden');
+      loginFormContainer.classList.remove('hidden');
+      messageText.textContent = '';
+    });
+
+    // Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = loginForm['login-email'].value;
+      const password = loginForm['login-password'].value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        messageText.className = 'message success';
+        messageText.textContent = 'লগইন সফল! আপনাকে হোমপেজে পাঠানো হচ্ছে...';
+        setTimeout(() => { window.location.href = 'home.html'; }, 1000);
+      } catch (err) {
+        console.error(err);
+        messageText.className = 'message error';
+        messageText.textContent = 'লগইন ব্যর্থ। ইমেইল বা পাসওয়ার্ড ভুল।';
+      }
+    });
+
+    // Register with referral 50 points
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = registerForm['register-name'].value;
+      const email = registerForm['register-email'].value;
+      const password = registerForm['register-password'].value;
+      const referralCode = registerForm['referral-code'].value.trim();
+
+      messageText.className = 'message';
+      messageText.textContent = 'রেজিস্ট্রেশন হচ্ছে...';
+
+      let referrerUid = null;
+
+      // validate referral code
+      if (referralCode) {
+        const usersRef = ref(database, 'users');
+        const referralQuery = query(usersRef, orderByChild('referralCode'), equalTo(referralCode));
+        const snapshot = await get(referralQuery);
+        if (snapshot.exists()) {
+          snapshot.forEach((child) => { referrerUid = child.key; });
+        } else {
+          messageText.className = 'message error';
+          messageText.textContent = 'রেফার কোডটি ভুল। অনুগ্রহ করে সঠিক কোড দিন।';
+          return;
+        }
+      }
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+        const newReferralCode = uid.slice(0, 6).toUpperCase();
+
+        // 50 points referral bonus for new user if code provided
+        const initialPoints = referralCode ? 50 : 0;
+
+        await set(ref(database, 'users/' + uid), {
+          name, email,
+          points: initialPoints,
+          referralCode: newReferralCode,
+          isPremium: false,
+          avatarUrl: '',
+          isAdmin: false,
+          activePlanId: null,
+          pendingPlanId: null,
+          premiumEndDate: null,
+          blueTick: { active: false, expiresAt: null }
+        });
+
+        // activity for new user
+        await push(ref(database, 'activity/' + uid), {
+          title: referralCode ? 'রেফার বোনাস' : 'অ্যাকাউন্ট তৈরি',
+          points: initialPoints,
+          icon: referralCode ? 'fa-share-nodes' : 'fa-user',
+          color: referralCode ? '#34c759' : '#6a11cb',
+          timestamp: Date.now()
+        });
+
+        // 50 points to referrer as well
+        if (referrerUid) {
+          const refSnap = await get(ref(database, 'users/' + referrerUid));
+          if (refSnap.exists()) {
+            const refData = refSnap.val();
+            const refNewPts = (refData.points || 0) + 50;
+            await update(ref(database, 'users/' + referrerUid), { points: refNewPts });
+            await push(ref(database, 'activity/' + referrerUid), {
+              title: 'সফল রেফার বোনাস',
+              points: 50,
+              icon: 'fa-user-plus',
+              color: '#6a11cb',
+              timestamp: Date.now()
+            });
+            // store referral under referrer
+            await update(ref(database, 'users/' + referrerUid + '/referrals/' + uid), {
+              by: referrerUid, uid, name, email, timestamp: Date.now()
+            });
+            await update(ref(database, 'users/' + referrerUid), { totalReferrals: (refData.totalReferrals || 0) + 1 });
+          }
+        }
+
+        messageText.className = 'message success';
+        messageText.textContent = 'রেজিস্ট্রেশন সফল! আপনাকে হোমপেজে পাঠানো হচ্ছে...';
+        setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+      } catch (error) {
+        console.error(error);
+        messageText.className = 'message error';
+        if (error.code === 'auth/email-already-in-use') messageText.textContent = 'এই ইমেইলটি ইতিমধ্যেই ব্যবহৃত হচ্ছে।';
+        else if (error.code === 'auth/weak-password') messageText.textContent = 'পাসওয়ার্ড দুর্বল। অনুগ্রহ করে কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন।';
+        else messageText.textContent = 'রেজিস্ট্রেশন ব্যর্থ। অনুগ্রহ করে আবার চেষ্টা করুন।';
+      }
+    });
+  </script>
+</body>
+</html>

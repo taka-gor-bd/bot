@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>Premium Plans - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root{--primary-color:#8A2BE2;--secondary-color:#FF1493;--premium-color:#ff9f0a;--green-color:#34c759;--red-color:#ff3b30;--dark-bg:#0d0d0d;--card-bg:#1c1c1e;--text-primary:#ffffff;--text-secondary:#a1a1aa}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background-color:var(--dark-bg);color:var(--text-primary);padding-bottom:90px}
+    .container{padding:20px 15px}
+    .premium-header{text-align:center;margin-bottom:40px}
+    .premium-header .fa-crown{font-size:48px;color:var(--premium-color);margin-bottom:15px}
+    .premium-header h1{font-size:28px;font-weight:700}
+    .premium-header p{font-size:16px;color:var(--text-secondary)}
+    .plans-grid{display:grid;grid-template-columns:1fr;gap:25px}
+    .plan-card{background-color:var(--card-bg);border-radius:16px;padding:25px;border:2px solid var(--card-bg);position:relative;overflow:hidden;transition:all .3s}
+    .plan-card.highlighted{border-color:var(--premium-color);box-shadow:0 0 20px rgba(255,159,10,.3)}
+    .plan-tag{position:absolute;top:15px;right:-40px;background-color:var(--premium-color);color:black;padding:5px 40px;font-size:12px;font-weight:700;transform:rotate(45deg)}
+    .plan-title{font-size:24px;font-weight:600}
+    .plan-price{font-size:42px;font-weight:700;margin:10px 0}
+    .plan-price span{font-size:16px;color:var(--text-secondary)}
+    .plan-features{list-style:none;margin:20px 0;text-align:left}
+    .plan-features li{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .plan-features .fa-check-circle{color:var(--green-color)}
+    .plan-button{width:100%;padding:15px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s}
+    .btn-choose{background-color:var(--primary-color);color:white}
+    .btn-pending{background-color:var(--text-secondary);color:var(--card-bg);cursor:not-allowed}
+    .btn-active{background-color:var(--green-color);color:white}
+    .plan-card.active-plan{border-color:var(--green-color);transform:scale(1.03)}
+    .active-plan-tag{font-size:12px;font-weight:600;color:var(--green-color);margin-bottom:10px;text-align:left;display:block}
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal-content{background-color:var(--card-bg);border-radius:20px;width:95%;max-width:480px;padding:25px;position:relative}
+    .modal-close{position:absolute;top:15px;right:15px;font-size:20px;cursor:pointer}
+    .modal-title{text-align:center;margin-bottom:20px}
+    .payment-tabs{display:flex;background-color:var(--dark-bg);border-radius:10px;padding:5px;margin-bottom:20px}
+    .payment-tab-btn{flex:1;padding:10px;background:none;border:none;color:var(--text-secondary);font-weight:600;border-radius:8px;cursor:pointer}
+    .payment-tab-btn.active{background-color:var(--primary-color);color:white}
+    .payment-content{display:none}
+    .payment-content.active{display:block}
+    .crypto-options{display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+    .crypto-btn{border:2px solid var(--text-secondary);color:var(--text-secondary);background:none;padding:8px 15px;border-radius:8px;font-weight:500;cursor:pointer}
+    .crypto-btn.selected{border-color:var(--premium-color);color:var(--premium-color)}
+    .deposit-details{text-align:center}
+    .deposit-address-wrapper{background-color:var(--dark-bg);border-radius:8px;padding:12px;margin:12px 0;display:flex;align-items:center;justify-content:space-between}
+    .deposit-address{word-break:break-all;font-size:14px}
+    .copy-icon{cursor:pointer;margin-left:10px}
+    .form-group{margin-top:12px;text-align:left}
+    .form-group label{font-size:14px;color:var(--text-secondary);margin-bottom:5px;display:block}
+    .form-input{width:100%;padding:12px;background:#2c2c2e;border:1px solid #3a3a3c;border-radius:8px;color:white}
+    .submit-deposit{margin-top:16px;width:100%;background-color:var(--primary-color)}
+    .alert{position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:var(--green-color);padding:12px 25px;border-radius:8px;z-index:1001;transition:top .5s cubic-bezier(.68,-.55,.27,1.55);display:flex;align-items:center;gap:10px}
+    .navigation{position:fixed;bottom:0;left:0;right:0;background-color:#101010;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom));border-top:1px solid #2a2a2a}
+    .nav-item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--text-secondary);flex-grow:1}
+    .nav-item.active{color:var(--primary-color)}
+    .nav-icon{font-size:24px;margin-bottom:5px}
+    .nav-label{font-size:12px;font-weight:500}
+  </style>
+</head>
+<body>
+  <header class="main-app-header" style="display:flex;justify-content:space-between;align-items:center;padding:15px;background-color:var(--dark-bg);position:sticky;top:0;z-index:100;">
+    <div class="header-left" style="display:flex;align-items:center;">
+      <img src="https://i.pravatar.cc/150?u=useravatar" alt="User Avatar" class="header-avatar" id="header-avatar-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid var(--primary-color);">
+      <div class="header-user-info" style="display:flex;flex-direction:column;">
+        <div class="header-user-name" id="header-user-name" style="font-size:16px;font-weight:600;">Loading...</div>
+        <div class="header-user-status" id="header-premium-status" style="font-size:11px;color:var(--premium-color);font-weight:500;display:none;align-items:center;gap:4px;"><i class="fas fa-crown"></i> Premium User</div>
+      </div>
+    </div>
+    <div class="header-right"><i class="fas fa-bell header-notification-icon" style="font-size:20px;color:var(--text-secondary);cursor:pointer;"></i></div>
+  </header>
+
+  <div class="container">
+    <header class="premium-header">
+      <i class="fas fa-crown"></i><h1>Unlock Premium</h1><p>Supercharge your earning potential!</p>
+    </header>
+
+    <section class="plans-grid" id="plans-grid">
+      <div class="plan-card" data-plan-id="free-trial">
+        <h3 class="plan-title">Free Trial</h3>
+        <div class="plan-price">$0<span>/7 days</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i> 1x Point Bonus (Limited)</li>
+          <li><i class="fas fa-check-circle"></i> Standard Support</li>
+          <li><i class="fas fa-check-circle"></i> Basic Ad Experience</li>
+        </ul>
+        <button class="plan-button btn-choose" data-plan-name="Free Trial" data-plan-price="0">Get Free Plan</button>
+      </div>
+
+      <div class="plan-card" data-plan-id="starter">
+        <h3 class="plan-title">Starter</h3>
+        <div class="plan-price">$5<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i> 2x Point Bonus</li>
+          <li><i class="fas fa-check-circle"></i> Ad-Free Experience</li>
+          <li><i class="fas fa-check-circle"></i> Standard Support</li>
+        </ul>
+        <button class="plan-button btn-choose" data-plan-name="Starter" data-plan-price="5">Choose Plan</button>
+      </div>
+
+      <div class="plan-card highlighted" data-plan-id="pro">
+        <div class="plan-tag">Best Value</div>
+        <h3 class="plan-title">Pro</h3>
+        <div class="plan-price">$10<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i> 3x Point Bonus</li>
+          <li><i class="fas fa-check-circle"></i> Ad-Free Experience</li>
+          <li><i class="fas fa-check-circle"></i> Priority Support</li>
+        </ul>
+        <button class="plan-button btn-choose" data-plan-name="Pro" data-plan-price="10">Choose Plan</button>
+      </div>
+
+      <div class="plan-card" data-plan-id="master">
+        <h3 class="plan-title">Master</h3>
+        <div class="plan-price">$20<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i> 5x Point Bonus</li>
+          <li><i class="fas fa-check-circle"></i> All Pro Benefits</li>
+          <li><i class="fas fa-check-circle"></i> Faster Withdrawals</li>
+        </ul>
+        <button class="plan-button btn-choose" data-plan-name="Master" data-plan-price="20">Choose Plan</button>
+      </div>
+
+      <div class="plan-card highlighted" data-plan-id="vip">
+        <div class="plan-tag">Most Popular</div>
+        <h3 class="plan-title">VIP</h3>
+        <div class="plan-price">$50<span>/lifetime</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i> 10x Point Bonus</li>
+          <li><i class="fas fa-check-circle"></i> All Master Benefits</li>
+          <li><i class="fas fa-check-circle"></i> Premium Profile Badge</li>
+        </ul>
+        <button class="plan-button btn-choose" data-plan-name="VIP" data-plan-price="50">Choose Plan</button>
+      </div>
+    </section>
+  </div>
+
+   Deposit Modal 
+  <div class="modal-overlay" id="deposit-modal">
+    <div class="modal-content">
+      <i class="fas fa-times modal-close" id="modal-close-btn"></i>
+      <h2 class="modal-title">Complete Your Deposit</h2>
+      <p id="deposit-plan-info" style="text-align:center;color:var(--text-secondary);margin-bottom:20px;"></p>
+
+      <div class="payment-tabs">
+        <button class="payment-tab-btn active" data-tab="crypto">Crypto</button>
+        <button class="payment-tab-btn" data-tab="binance">Binance Pay</button>
+        <button class="payment-tab-btn" data-tab="bybit">Bybit UID</button>
+        <button class="payment-tab-btn" data-tab="bitget">Bitget UID</button>
+      </div>
+
+      <div class="payment-content active" id="crypto-content">
+        <div class="crypto-options" id="crypto-options">
+          <button class="crypto-btn" data-crypto="USDT_TRC20">USDT (TRC20)</button>
+          <button class="crypto-btn" data-crypto="BTC">BTC</button>
+          <button class="crypto-btn" data-crypto="BNB_BEP20">BNB (BEP20)</button>
+        </div>
+        <div class="deposit-details" id="deposit-details-crypto" style="display:none;">
+          <p class="deposit-info">Send exactly <strong id="deposit-amount-crypto"></strong> to the address below.</p>
+          <div class="deposit-address-wrapper">
+            <span id="deposit-address" class="deposit-address"></span>
+            <i class="far fa-copy copy-icon" id="copy-address-btn" title="Copy"></i>
+          </div>
+          <div class="form-group">
+            <label for="txn-id">Transaction ID / Hash</label>
+            <input type="text" id="txn-id" class="form-input" placeholder="Enter your transaction ID here">
+          </div>
+          <button class="plan-button submit-deposit" id="submit-deposit-crypto">Submit Proof</button>
+        </div>
+      </div>
+
+      <div class="payment-content" id="binance-content">
+        <p class="deposit-info">Send exactly <strong id="binance-amount"></strong> to our Binance Pay ID.</p>
+        <div class="form-group">
+          <label>Our Binance Pay ID</label>
+          <div class="deposit-address-wrapper">
+            <span id="binance-id-text" class="deposit-address">BINANCEPAYID1234567890</span>
+            <i class="far fa-copy copy-icon" id="copy-binance-id-btn" title="Copy"></i>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Your Binance Pay ID</label>
+          <input type="text" id="user-binance-id" class="form-input" placeholder="Enter your Binance Pay ID for verification">
+        </div>
+        <button class="plan-button submit-deposit" id="submit-deposit-binance">Submit Proof</button>
+      </div>
+
+      <div class="payment-content" id="bybit-content">
+        <p class="deposit-info">Send exactly <strong id="bybit-amount"></strong> and include our Bybit UID as receiver.</p>
+        <div class="form-group">
+          <label>Our Bybit UID</label>
+          <div class="deposit-address-wrapper">
+            <span id="bybit-id-text" class="deposit-address">BYBIT_UID_NOT_SET</span>
+            <i class="far fa-copy copy-icon" id="copy-bybit-id-btn" title="Copy"></i>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Your Bybit UID (for verification)</label>
+          <input type="text" id="user-bybit-id" class="form-input" placeholder="Enter your Bybit UID">
+        </div>
+        <button class="plan-button submit-deposit" id="submit-deposit-bybit">Submit Proof</button>
+      </div>
+
+      <div class="payment-content" id="bitget-content">
+        <p class="deposit-info">Send exactly <strong id="bitget-amount"></strong> and include our Bitget UID as receiver.</p>
+        <div class="form-group">
+          <label>Our Bitget UID</label>
+          <div class="deposit-address-wrapper">
+            <span id="bitget-id-text" class="deposit-address">BITGET_UID_NOT_SET</span>
+            <i class="far fa-copy copy-icon" id="copy-bitget-id-btn" title="Copy"></i>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Your Bitget UID (for verification)</label>
+          <input type="text" id="user-bitget-id" class="form-input" placeholder="Enter your Bitget UID">
+        </div>
+        <button class="plan-button submit-deposit" id="submit-deposit-bitget">Submit Proof</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="alert-container"></div>
+
+  <nav class="navigation">
+    <a href="home.html" class="nav-item"><i class="fas fa-home nav-icon"></i><span class="nav-label">Home</span></a>
+    <a href="tasks.html" class="nav-item"><i class="fas fa-list-check nav-icon"></i><span class="nav-label">Tasks</span></a>
+    <a href="premium.html" class="nav-item active"><i class="fas fa-star nav-icon"></i><span class="nav-label">Premium</span></a>
+    <a href="wallet.html" class="nav-item"><i class="fas fa-wallet nav-icon"></i><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" class="nav-item"><i class="fas fa-user nav-icon"></i><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, push, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    // DOM
+    const plansGrid = document.getElementById('plans-grid');
+    const modal = document.getElementById('deposit-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const paymentTabBtns = document.querySelectorAll('.payment-tab-btn');
+    const paymentContents = document.querySelectorAll('.payment-content');
+    const cryptoOptions = document.getElementById('crypto-options');
+    const depositDetailsCrypto = document.getElementById('deposit-details-crypto');
+    const depositAddressEl = document.getElementById('deposit-address');
+    const copyAddressBtn = document.getElementById('copy-address-btn');
+    const submitDepositCryptoBtn = document.getElementById('submit-deposit-crypto');
+    const submitDepositBinanceBtn = document.getElementById('submit-deposit-binance');
+    const submitDepositBybitBtn = document.getElementById('submit-deposit-bybit');
+    const submitDepositBitgetBtn = document.getElementById('submit-deposit-bitget');
+    const headerUserNameEl = document.getElementById('header-user-name');
+    const headerAvatarImgEl = document.getElementById('header-avatar-img');
+    const headerPremiumStatusEl = document.getElementById('header-premium-status');
+
+    const copyBinanceBtn = document.getElementById('copy-binance-id-btn');
+    const binanceIdText = document.getElementById('binance-id-text');
+    const copyBybitBtn = document.getElementById('copy-bybit-id-btn');
+    const bybitIdText = document.getElementById('bybit-id-text');
+    const copyBitgetBtn = document.getElementById('copy-bitget-id-btn');
+    const bitgetIdText = document.getElementById('bitget-id-text');
+
+    const depositPlanInfo = document.getElementById('deposit-plan-info');
+    const cryptoAmountEl = document.getElementById('deposit-amount-crypto');
+    const binanceAmountEl = document.getElementById('binance-amount');
+    const bybitAmountEl = document.getElementById('bybit-amount');
+    const bitgetAmountEl = document.getElementById('bitget-amount');
+
+    let selectedPlanId = null;
+    let selectedPlanPrice = 0;
+    let selectedCrypto = null;
+
+    const settings = {
+      payment: {
+        binancePayId: "BINANCEPAYID1234567890",
+        bybitUid: "",
+        bitgetUid: "",
+        cryptoAddresses: { USDT_TRC20: "", BTC: "", BNB_BEP20: "" }
+      }
+    };
+
+    // Alerts
+    function showAlert(message, type = 'green') {
+      const container = document.getElementById('alert-container');
+      const existingAlert = document.querySelector('.alert');
+      if (existingAlert) existingAlert.remove();
+      const alert = document.createElement('div');
+      alert.className = 'alert';
+      alert.style.backgroundColor = type === 'green' ? 'var(--green-color)' : 'var(--red-color)';
+      alert.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+      container.appendChild(alert);
+      setTimeout(()=> alert.style.top='20px', 50);
+      setTimeout(()=> {
+        alert.style.top='-100px';
+        alert.addEventListener('transitionend', ()=> alert.remove());
+      }, 2800);
+    }
+
+    function openModal(planName, planPrice, planId) {
+      selectedPlanId = planId;
+      selectedPlanPrice = planPrice;
+      depositPlanInfo.innerText = `You are purchasing the ${planName} plan.`;
+      cryptoAmountEl.innerText = `${planPrice} USD`;
+      binanceAmountEl.innerText = `${planPrice} USD`;
+      bybitAmountEl.innerText = `${planPrice} USD`;
+      bitgetAmountEl.innerText = `${planPrice} USD`;
+
+      paymentTabBtns.forEach(b => b.classList.remove('active'));
+      paymentContents.forEach(c => c.classList.remove('active'));
+      document.querySelector('.payment-tab-btn[data-tab="crypto"]').classList.add('active');
+      document.getElementById('crypto-content').classList.add('active');
+
+      depositDetailsCrypto.style.display = 'none';
+      cryptoOptions.querySelectorAll('.crypto-btn').forEach(b => b.classList.remove('selected'));
+      modal.style.display = 'flex';
+    }
+    function closeModal() {
+      modal.style.display = 'none';
+      document.getElementById('txn-id').value = '';
+      document.getElementById('user-binance-id').value = '';
+      document.getElementById('user-bybit-id').value = '';
+      document.getElementById('user-bitget-id').value = '';
+    }
+
+    paymentTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        paymentTabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        paymentContents.forEach(c => c.classList.remove('active'));
+        document.getElementById(`${btn.dataset.tab}-content`).classList.add('active');
+      });
+    });
+
+    cryptoOptions.addEventListener('click', (e) => {
+      if (e.target.classList.contains('crypto-btn')) {
+        cryptoOptions.querySelectorAll('.crypto-btn').forEach(b => b.classList.remove('selected'));
+        e.target.classList.add('selected');
+        selectedCrypto = e.target.dataset.crypto;
+        depositAddressEl.innerText = settings.payment.cryptoAddresses[selectedCrypto] || 'ADDRESS_NOT_SET';
+        depositDetailsCrypto.style.display = 'block';
+      }
+    });
+    copyAddressBtn.addEventListener('click', () => {
+      if (depositAddressEl.innerText) navigator.clipboard.writeText(depositAddressEl.innerText).then(()=> showAlert('Address copied!'));
+    });
+    copyBinanceBtn.addEventListener('click', ()=> navigator.clipboard.writeText(binanceIdText.innerText).then(()=> showAlert('Binance ID copied!')));
+    copyBybitBtn.addEventListener('click', ()=> navigator.clipboard.writeText(bybitIdText.innerText).then(()=> showAlert('Bybit UID copied!')));
+    copyBitgetBtn.addEventListener('click', ()=> navigator.clipboard.writeText(bitgetIdText.innerText).then(()=> showAlert('Bitget UID copied!')));
+
+    function handleProofSubmit(payload) {
+      const paymentsRef = ref(database, 'pendingPayments');
+      const depRef = ref(database, 'depositRequests');
+      push(paymentsRef, payload).then(()=> {
+        push(depRef, { ...payload, proofUrl: "#" }).then(()=> {
+          update(ref(database, 'users/' + payload.userId), { pendingPlanId: selectedPlanId }).then(()=> {
+            closeModal(); showAlert('Deposit proof submitted successfully! Your plan will be activated after verification.','green');
+          });
+        });
+      }).catch((e)=> { console.error(e); showAlert('Failed to submit proof','red'); });
+    }
+
+    submitDepositCryptoBtn.addEventListener('click', ()=>{
+      const user = auth.currentUser;
+      if (!user) return showAlert('Please log in', 'red');
+      const txnId = document.getElementById('txn-id').value.trim();
+      if (!selectedCrypto || !txnId) return showAlert('Select crypto and enter Txn ID','red');
+      handleProofSubmit({
+        userId: user.uid, planId: selectedPlanId, plan: selectedPlanId, amount: selectedPlanPrice,
+        paymentMethod: `Crypto (${selectedCrypto})`, proof: txnId, cryptoType: selectedCrypto,
+        status: 'pending', timestamp: serverTimestamp()
+      });
+    });
+    submitDepositBinanceBtn.addEventListener('click', ()=>{
+      const user = auth.currentUser;
+      if (!user) return showAlert('Please log in','red');
+      const userBinanceId = document.getElementById('user-binance-id').value.trim();
+      if (!userBinanceId) return showAlert('Enter your Binance Pay ID','red');
+      handleProofSubmit({
+        userId: user.uid, planId: selectedPlanId, plan: selectedPlanId, amount: selectedPlanPrice,
+        paymentMethod: 'Binance Pay', proof: userBinanceId, cryptoType: null,
+        status: 'pending', timestamp: serverTimestamp()
+      });
+    });
+    submitDepositBybitBtn?.addEventListener('click', ()=>{
+      const user = auth.currentUser;
+      if (!user) return showAlert('Please log in','red');
+      const id = document.getElementById('user-bybit-id').value.trim();
+      if (!id) return showAlert('Enter your Bybit UID','red');
+      handleProofSubmit({
+        userId: user.uid, planId: selectedPlanId, plan: selectedPlanId, amount: selectedPlanPrice,
+        paymentMethod: 'Bybit UID', proof: id, cryptoType: null,
+        status: 'pending', timestamp: serverTimestamp()
+      });
+    });
+    submitDepositBitgetBtn?.addEventListener('click', ()=>{
+      const user = auth.currentUser;
+      if (!user) return showAlert('Please log in','red');
+      const id = document.getElementById('user-bitget-id').value.trim();
+      if (!id) return showAlert('Enter your Bitget UID','red');
+      handleProofSubmit({
+        userId: user.uid, planId: selectedPlanId, plan: selectedPlanId, amount: selectedPlanPrice,
+        paymentMethod: 'Bitget UID', proof: id, cryptoType: null,
+        status: 'pending', timestamp: serverTimestamp()
+      });
+    });
+
+    plansGrid.addEventListener('click', (e)=>{
+      const button = e.target.closest('.plan-button');
+      if (!button || button.disabled) return;
+      const planName = button.dataset.planName;
+      const planPrice = parseFloat(button.dataset.planPrice);
+      const planId = button.closest('.plan-card').dataset.planId;
+      if (planId === 'free-trial') {
+        const u = auth.currentUser; if (!u) return showAlert('Please log in', 'red');
+        const exp = Date.now() + 7*24*60*60*1000;
+        update(ref(database, 'users/' + u.uid), {
+          activePlanId: 'free-trial', isPremium: true, freeTrialUsed: true, premiumEndDate: exp
+        }).then(()=> showAlert('Free Trial activated! It will expire in 7 days.', 'green'));
+      } else openModal(planName, planPrice, planId);
+    });
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    document.getElementById('deposit-modal').addEventListener('click', (e)=> { if (e.target.id === 'deposit-modal') closeModal(); });
+
+    // Load payment settings from Admin
+    onValue(ref(database, 'settings/payment'), (s)=>{
+      const v = s.val() || {};
+      settings.payment.binancePayId = v.binancePayId || settings.payment.binancePayId;
+      settings.payment.bybitUid = v.bybitUid || "";
+      settings.payment.bitgetUid = v.bitgetUid || "";
+      settings.payment.cryptoAddresses = v.cryptoAddresses || settings.payment.cryptoAddresses;
+      binanceIdText.textContent = settings.payment.binancePayId || 'BINANCEPAYID1234567890';
+      bybitIdText.textContent = settings.payment.bybitUid || 'BYBIT_UID_NOT_SET';
+      bitgetIdText.textContent = settings.payment.bitgetUid || 'BITGET_UID_NOT_SET';
+    });
+
+    // Auth user header
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      onValue(ref(database, 'users/' + user.uid), (snap)=>{
+        const d = snap.val()||{};
+        headerAvatarImgEl.src = d.avatarUrl || 'https://i.pravatar.cc/150';
+        headerUserNameEl.textContent = d.name || 'Guest';
+        headerPremiumStatusEl.style.display = d.isPremium ? 'flex' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

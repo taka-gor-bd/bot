@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Leaderboard - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{--primary:#6a11cb;--secondary:#2575fc;--bg:#0d0d0d;--card:#1c1c1e;--muted:#a1a1aa;--amber:#ff9f0a;--green:#34c759;--blue:#0a84ff}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;padding-bottom:90px}
+    .container{padding:20px 15px;max-width:640px;margin:0 auto}
+    .title{font-size:26px;font-weight:800;text-align:center;margin-bottom:10px}
+    .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid #2a2a2a;background:#141414;color:#ddd;font-size:13px;cursor:pointer}
+    .tab.active{background:linear-gradient(135deg, var(--primary), var(--secondary));border-color:transparent}
+    .card{background:var(--card);border:1px solid #2a2a2a;border-radius:14px;padding:8px}
+    .row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px}
+    .row:nth-child(odd){background:#141414}
+    .rank{width:28px;text-align:center;font-weight:800}
+    .avatar{width:38px;height:38px;border-radius:999px;border:2px solid var(--primary);overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .uinfo{flex:1}
+    .uname{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+    .badge{padding:2px 6px;border-radius:6px;font-size:10px;font-weight:700}
+    .badge.premium{background:var(--amber);color:#1a1a1a}
+    .badge.blue{background:var(--blue);color:#fff}
+    .points{font-weight:800}
+    .navigation{position:fixed;bottom:0;left:0;right:0;background:#101010;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom));border-top:1px solid #2a2a2a}
+    .nav-item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:#a1a1aa;flex-grow:1}
+    .nav-item.active{color:var(--primary)}
+    .nav-icon{font-size:24px;margin-bottom:5px}
+    .nav-label{font-size:12px;font-weight:500}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Leaderboard</div>
+    <div class="tabs">
+      <button class="tab active" data-mode="all">All Time</button>
+      <button class="tab" data-mode="monthly">Monthly</button>
+      <button class="tab" data-mode="weekly">Weekly</button>
+      <button class="tab" data-mode="daily">Daily</button>
+    </div>
+    <div class="card" id="board"></div>
+  </div>
+
+  <nav class="navigation">
+    <a href="home.html" class="nav-item"><i class="fas fa-home nav-icon"></i><span class="nav-label">Home</span></a>
+    <a href="tasks.html" class="nav-item"><i class="fas fa-list-check nav-icon"></i><span class="nav-label">Tasks</span></a>
+    <a href="premium.html" class="nav-item"><i class="fas fa-star nav-icon"></i><span class="nav-label">Premium</span></a>
+    <a href="withdraw.html" class="nav-item"><i class="fas fa-wallet nav-icon"></i><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" class="nav-item"><i class="fas fa-user nav-icon"></i><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const board = document.getElementById('board');
+    const tabs = document.querySelectorAll('.tab');
+
+    let users = [];
+    function render(mode='all') {
+      // For now, we use all-time points. Extensions can be added for daily/weekly stats.
+      const arr = [...users].sort((a,b)=> (b.points||0)-(a.points||0)).slice(0,100);
+      board.innerHTML = '';
+      arr.forEach((u, idx)=>{
+        const row = document.createElement('div'); row.className='row';
+        const blue = u.blueTick && u.blueTick.active;
+        const prem = u.isPremium;
+        const name = u.name || 'User';
+        const avatar = u.avatarUrl || 'https://i.pravatar.cc/150?u='+ (u.email||name);
+        row.innerHTML = `
+          <div class="rank">${idx+1}</div>
+          <div class="avatar"><img src="${avatar}" alt=""></div>
+          <div class="uinfo">
+            <div class="uname">${name}
+              ${blue ? '<span class="badge blue"><i class="fas fa-circle-check"></i> Verified</span>' : ''}
+              ${prem ? '<span class="badge premium"><i class="fas fa-crown"></i> Premium</span>' : ''}
+            </div>
+            <div class="muted" style="font-size:11px;color:#a1a1aa">${u.email||''}</div>
+          </div>
+          <div class="points">${(u.points||0).toLocaleString()} pts</div>
+        `;
+        board.appendChild(row);
+      });
+      if (arr.length===0) {
+        board.innerHTML = '<div style="text-align:center;color:#a1a1aa;padding:10px;">No users yet.</div>';
+      }
+    }
+
+    tabs.forEach(t=> t.addEventListener('click', ()=>{
+      tabs.forEach(x=> x.classList.remove('active'));
+      t.classList.add('active');
+      render(t.dataset.mode);
+    }));
+
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href='login.html'; return; }
+      onValue(ref(db, 'users'), (s)=>{
+        const v = s.val()||{};
+        users = Object.keys(v).map(uid=> ({ uid, ...v[uid] }));
+        render(document.querySelector('.tab.active')?.dataset.mode || 'all');
+      });
+    });
+  </script>
+</body>
+</html>

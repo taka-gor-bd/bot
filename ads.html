@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Watch Ads - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src='//libtl.com/sdk.js' data-zone='9693168' data-sdk='show_9693168'></script>
+  <style>
+    :root { --primary-color:#6a11cb; --secondary-color:#2575fc; --premium-color:#ff9f0a; --green-color:#34c759; --red-color:#ff3b30; --dark-bg:#0d0d0d; --card-bg:#1c1c1e; --text-primary:#ffffff; --text-secondary:#a1a1aa; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background-color:var(--dark-bg);color:var(--text-primary);padding-bottom:90px}
+    .container{padding:20px 15px}
+    .main-app-header{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background-color:var(--dark-bg);position:sticky;top:0;z-index:100}
+    .header-left{display:flex;align-items:center}
+    .header-avatar{width:35px;height:35px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid var(--primary-color)}
+    .header-user-info{display:flex;flex-direction:column}
+    .header-user-name{font-size:15px;font-weight:600}
+    .header-user-status{font-size:10px;color:var(--premium-color);font-weight:500;display:flex;align-items:center;gap:4px}
+    .header-notification-icon{font-size:20px;color:var(--text-secondary);cursor:pointer}
+    .page-title{font-size:28px;font-weight:700;margin-bottom:25px;text-align:center}
+    .ad-stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:30px}
+    .stat-card{background-color:var(--card-bg);border-radius:12px;padding:12px 8px;text-align:center}
+    .stat-value{font-size:22px;font-weight:700}
+    .stat-label{font-size:11px;color:var(--text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ad-viewing-area{background-color:var(--card-bg);border-radius:15px;height:250px;display:flex;justify-content:center;align-items:center;flex-direction:column;margin-bottom:30px;position:relative;overflow:hidden}
+    .ad-content{width:90%;height:80%;background-color:#333;display:flex;justify-content:center;align-items:center;font-size:18px;color:var(--text-secondary);border-radius:8px;transition:background-color .5s ease}
+    .ad-button-wrapper{margin-top:20px;text-align:center}
+    .watch-ad-btn{padding:15px 40px;font-size:16px;font-weight:600;border:none;border-radius:50px;background-image:linear-gradient(135deg,var(--primary-color),var(--secondary-color));color:#fff;box-shadow:0 4px 15px rgba(0,0,0,.2);cursor:pointer;transition:all .3s ease}
+    .watch-ad-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+    .watch-ad-btn:disabled{background-image:none;background-color:var(--text-secondary);color:#555;cursor:not-allowed;transform:none;box-shadow:none}
+    .alert{position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:var(--green-color);padding:12px 25px;border-radius:8px;z-index:1001;transition:top .5s cubic-bezier(.68,-.55,.27,1.55);display:flex;align-items:center;gap:10px;color:var(--text-primary)}
+    .alert.error{background-color:var(--red-color)}
+    .navigation{position:fixed;bottom:0;left:0;right:0;background-color:var(--dark-bg);box-shadow:0 -2px 10px rgba(0,0,0,.2);display:flex;justify-content:space-around;align-items:center;padding:10px 0 calc(15px + env(safe-area-inset-bottom))}
+    .nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;color:var(--text-secondary);transition:color .3s ease;min-width:20%}
+    .nav-item.active{color:var(--primary-color)}
+    .nav-icon{font-size:24px;margin-bottom:5px}
+    .nav-label{font-size:12px;font-weight:500}
+  </style>
+</head>
+<body>
+  <header class="main-app-header">
+    <div class="header-left">
+      <img src="https://i.pravatar.cc/150?u=useravatar" alt="User Avatar" class="header-avatar" id="header-avatar">
+      <div class="header-user-info">
+        <div class="header-user-name" id="header-name">Loading...</div>
+        <div class="header-user-status" id="header-premium" style="display:none;"><i class="fas fa-crown"></i> Premium User</div>
+      </div>
+    </div>
+    <div class="header-right"><i class="fas fa-bell header-notification-icon"></i></div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">Watch Ads</h1>
+
+    <div class="ad-stats-grid">
+      <div class="stat-card"><div class="stat-value" id="ads-watched-today">0</div><div class="stat-label">Ads Watched Today</div></div>
+      <div class="stat-card"><div class="stat-value" id="ads-left-today">50</div><div class="stat-label">Ads Left Today</div></div>
+      <div class="stat-card"><div class="stat-value" id="total-ad-points">0</div><div class="stat-label">Points from Ads</div></div>
+    </div>
+
+    <div class="ad-viewing-area">
+      <div class="ad-content" id="ad-content">
+        <p>Click "Watch Ad" to start!</p>
+        <p style="font-size:14px; margin-top:10px;">Earn 10 points per ad.</p>
+      </div>
+      <div class="ad-button-wrapper">
+        <button class="watch-ad-btn" id="watch-ad-btn">Watch Ad</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="alert-container"></div>
+
+  <nav class="navigation">
+    <a href="home.html" class="nav-item"><i class="fas fa-home nav-icon"></i><span class="nav-label">Home</span></a>
+    <a href="tasks.html" class="nav-item"><i class="fas fa-list-check nav-icon"></i><span class="nav-label">Tasks</span></a>
+    <a href="premium.html" class="nav-item"><i class="fas fa-star nav-icon"></i><span class="nav-label">Premium</span></a>
+    <a href="withdraw.html" class="nav-item"><i class="fas fa-wallet nav-icon"></i><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" class="nav-item active"><i class="fas fa-user nav-icon"></i><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, get, update, serverTimestamp, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const MAX_ADS_PER_DAY = 50;
+    const POINTS_PER_AD = 10;
+
+    let adsWatchedToday = 0;
+    let totalAdPoints = 0;
+
+    const adsWatchedTodayEl = document.getElementById('ads-watched-today');
+    const adsLeftTodayEl = document.getElementById('ads-left-today');
+    const totalAdPointsEl = document.getElementById('total-ad-points');
+    const adContentEl = document.getElementById('ad-content');
+    const watchAdBtn = document.getElementById('watch-ad-btn');
+    const alertContainer = document.getElementById('alert-container');
+    const headerName = document.getElementById('header-name');
+    const headerAvatar = document.getElementById('header-avatar');
+    const headerPremium = document.getElementById('header-premium');
+
+    function showAlert(message, type = 'green') {
+      const existingAlert = document.querySelector('.alert');
+      if (existingAlert) existingAlert.remove();
+      const div = document.createElement('div');
+      div.className = 'alert' + (type==='red' ? ' error':'');
+      div.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+      alertContainer.appendChild(div);
+      requestAnimationFrame(()=> div.style.top = '20px');
+      setTimeout(()=> {
+        div.style.top = '-100px';
+        div.addEventListener('transitionend', ()=> div.remove());
+      }, 2500);
+    }
+
+    function updateStatsDisplay() {
+      adsWatchedTodayEl.textContent = adsWatchedToday;
+      adsLeftTodayEl.textContent = MAX_ADS_PER_DAY - adsWatchedToday;
+      totalAdPointsEl.textContent = totalAdPoints;
+      if (adsWatchedToday >= MAX_ADS_PER_DAY) {
+        watchAdBtn.disabled = true;
+        watchAdBtn.textContent = 'Daily limit reached';
+        adContentEl.innerHTML = '<p>আজকের জন্য সমস্ত অ্যাড দেখা শেষ!</p><p style="font-size:14px; margin-top:10px;">আগামীকাল আবার আসুন।</p>';
+      } else {
+        watchAdBtn.disabled = false;
+        watchAdBtn.textContent = 'Watch Ad';
+        adContentEl.innerHTML = '<p>Click "Watch Ad" to start!</p><p style="font-size:14px; margin-top:10px;">Earn 10 points per ad.</p>';
+      }
+    }
+
+    function loadLocal() {
+      const today = new Date().toDateString();
+      const last = localStorage.getItem('lastAdDate');
+      if (last !== today) {
+        localStorage.setItem('lastAdDate', today);
+        localStorage.setItem('adsWatchedToday', '0');
+      }
+      adsWatchedToday = parseInt(localStorage.getItem('adsWatchedToday') || '0');
+      totalAdPoints = parseInt(localStorage.getItem('totalAdPoints') || '0');
+    }
+    function saveLocal() {
+      localStorage.setItem('adsWatchedToday', String(adsWatchedToday));
+      localStorage.setItem('totalAdPoints', String(totalAdPoints));
+      localStorage.setItem('lastAdDate', new Date().toDateString());
+    }
+
+    watchAdBtn.addEventListener('click', async () => {
+      if (adsWatchedToday >= MAX_ADS_PER_DAY) { showAlert('আজকের জন্য সমস্ত অ্যাড দেখা শেষ!', 'red'); return; }
+      watchAdBtn.disabled = true;
+      adContentEl.innerHTML = '<p>অ্যাড লোড হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন।</p>';
+      try {
+        if (window.show_9693168) {
+          await window.show_9693168();
+        } else {
+          // fallback wait if ad sdk not ready
+          await new Promise(r => setTimeout(r, 2000));
+        }
+        // success
+        adsWatchedToday++;
+        totalAdPoints += POINTS_PER_AD;
+        saveLocal(); updateStatsDisplay();
+        const user = auth.currentUser;
+        if (user) {
+          const uRef = ref(db, 'users/' + user.uid);
+          const snap = await get(uRef);
+          const d = snap.val() || {};
+          const newPts = (d.points || 0) + POINTS_PER_AD;
+          await update(uRef, {
+            points: newPts,
+            ['activity/' + Date.now()]: {
+              title: 'Ad Watched', points: POINTS_PER_AD, icon: 'fa-tv', color: '#ff3b30', timestamp: serverTimestamp()
+            }
+          });
+        }
+        showAlert(`অ্যাড দেখা সম্পূর্ণ হয়েছে! আপনি ${POINTS_PER_AD} পয়েন্ট পেয়েছেন।`, 'green');
+      } catch (e) {
+        console.error('Ad Error:', e);
+        showAlert('অ্যাড লোড হতে সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'red');
+      } finally {
+        watchAdBtn.disabled = false;
+        watchAdBtn.textContent = 'Watch Ad';
+      }
+    });
+
+    import { onValue as onVal } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href = 'login.html'; return; }
+      const uRef = ref(db, 'users/' + user.uid);
+      onVal(uRef, (s)=>{
+        const d = s.val()||{};
+        headerName.textContent = d.name || 'User';
+        headerPremium.style.display = d.isPremium ? 'flex' : 'none';
+        headerAvatar.src = d.avatarUrl || 'https://i.pravatar.cc/150?u=useravatar';
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadLocal(); updateStatsDisplay();
+    });
+  </script>
+</body>
+</html>

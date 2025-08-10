@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>Tasks - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root{--primary:#6a11cb;--secondary:#2575fc;--bg:#0d0d0d;--card:#1c1c1e;--muted:#a1a1aa;--amber:#ff9f0a;--green:#34c759;--red:#ff3b30;--blue:#0a84ff}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;padding-bottom:90px}
+    .container{padding:20px 15px;max-width:480px;margin:0 auto}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .me{font-size:13px;color:var(--muted)}
+    .me strong{color:#fff}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--primary),var(--secondary));padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
+    .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;background:#101010;border:1px solid #2a2a2a;border-radius:12px;padding:6px}
+    .tab{border:0;padding:8px 10px;border-radius:8px;background:#141414;color:#ddd;font-weight:600;cursor:pointer}
+    .tab.active{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+    .list{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+    .card{background:var(--card);border:1px solid #2a2a2a;border-radius:14px;padding:14px}
+    .row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .title{font-weight:700}
+    .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;color:var(--muted);font-size:12px}
+    .badge{font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px}
+    .badge.prem{background:var(--amber);color:#1a1a1a}
+    .badge.plan{background:#dbeafe;color:#1e40af}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+    .open{color:#60a5fa;text-decoration:underline;font-size:12px}
+    .btn{width:100%;margin-top:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:0;color:#fff;font-weight:700;border-radius:10px;padding:12px;cursor:pointer}
+    .empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 0}
+    .bar{border:1px solid #2a2a2a;border-radius:14px;padding:12px;margin:14px 0}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#101010;border-top:1px solid #2a2a2a;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom))}
+    .nav a{display:flex;flex-direction:column;align-items:center;color:#a1a1aa;text-decoration:none}
+    .nav a.active{color:var(--primary)}
+    .nav i{font-size:22px;margin-bottom:4px}
+    .alert{position:fixed;top:-80px;left:50%;transform:translateX(-50%);background:var(--green);padding:10px 14px;border-radius:10px;z-index:1000;transition:top .5s;display:flex;gap:8px}
+    .alert.err{background:var(--red)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="me">Logged in as <strong id="me-name">...</strong></div>
+        <div class="me">Points: <strong id="me-pts">0</strong></div>
+      </div>
+      <div id="prem-pill" class="pill" style="display:none;"><i class="fas fa-crown"></i> Premium</div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-cat="all">All</button>
+      <button class="tab" data-cat="social">Social</button>
+      <button class="tab" data-cat="ads">Watch Ads</button>
+      <button class="tab" data-cat="install">App Install</button>
+    </div>
+
+    <div class="bar">
+      <div class="me">Tip: Start a task, complete wait time on the target page, then come back — reward auto-adds.</div>
+    </div>
+
+    <div class="list" id="list"></div>
+    <div id="alert" class="alert"><i class="fas fa-circle-check"></i><span id="alert-text">Saved</span></div>
+  </div>
+
+  <div class="nav">
+    <a href="home.html"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="tasks.html" class="active"><i class="fas fa-list-check"></i><span>Tasks</span></a>
+    <a href="premium.html"><i class="fas fa-star"></i><span>Premium</span></a>
+    <a href="withdraw.html"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+    <a href="profile.html"><i class="fas fa-user"></i><span>Profile</span></a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const tabsEl = document.getElementById('tabs');
+    const listEl = document.getElementById('list');
+    const meNameEl = document.getElementById('me-name');
+    const mePtsEl = document.getElementById('me-pts');
+    const premPill = document.getElementById('prem-pill');
+    const alertEl = document.getElementById('alert'); const alertText = document.getElementById('alert-text');
+
+    const state = { me:null, tasks:[], cat:'all' };
+
+    function showAlert(msg, err=false){
+      alertText.textContent = msg;
+      alertEl.classList.toggle('err', !!err);
+      alertEl.style.top = '16px';
+      clearTimeout(alertEl._t); alertEl._t = setTimeout(()=> alertEl.style.top = '-80px', 2000);
+    }
+
+    function render(){
+      const now = Date.now();
+      const me = state.me || {};
+      const tasks = state.tasks
+        .filter(t=>{
+          const timeOk = (t.startAt==null || t.startAt<=now) && (t.endAt==null || now<t.endAt) && (t.active ?? true);
+          const planOk = !t.premiumOnly || (me.isPremium && (!t.planIds || t.planIds.length===0 || (me.activePlanId && t.planIds.includes(me.activePlanId))));
+          const catOk = state.cat==='all' ? true : t.category === state.cat;
+          return timeOk && planOk && catOk;
+        })
+        .sort((a,b)=> (b.reward||0)-(a.reward||0));
+
+      listEl.innerHTML = '';
+      if (tasks.length===0){
+        const d = document.createElement('div'); d.className='empty'; d.textContent = 'No tasks available.'; listEl.appendChild(d); return;
+      }
+      tasks.forEach(t=>{
+        const card = document.createElement('div'); card.className='card';
+        const colorDot = t.color ? `<span class="dot" style="background:${t.color}"></span>` : '';
+        const prem = t.premiumOnly ? `<span class="badge prem">Premium</span>` : '';
+        const plans = Array.isArray(t.planIds) ? t.planIds.map(p=> `<span class="badge plan">${String(p).toUpperCase()}</span>`).join('') : '';
+        card.innerHTML = `
+          <div class="row">
+            <div>
+              <div class="title">${colorDot} ${t.title}</div>
+              <div class="meta">
+                <span>Reward: ${t.reward} pts</span><span>•</span><span>Duration: ${t.seconds}s</span>
+                ${prem} ${plans}
+              </div>
+            </div>
+            <a class="open" href="${t.link}" target="_blank" rel="noopener">Open</a>
+          </div>
+          <button class="btn" data-id="${t.id}">Start Task</button>
+        `;
+        card.querySelector('button')!.addEventListener('click', ()=> startTask(t));
+        listEl.appendChild(card);
+      });
+    }
+
+    tabsEl.addEventListener('click', (e)=>{
+      const b = e.target.closest('.tab'); if(!b) return;
+      tabsEl.querySelectorAll('.tab').forEach(x=> x.classList.remove('active'));
+      b.classList.add('active'); state.cat = b.dataset.cat; render();
+    });
+
+    async function startTask(task){
+      const user = auth.currentUser; if (!user) return;
+      const key = `taskTimer_${user.uid}_${task.id}`;
+      localStorage.setItem(key, JSON.stringify({ startTime: Date.now(), seconds: task.seconds||30, reward: task.reward||0, title: task.title||'Task' }));
+      // optional: open link if not clicked
+      window.open(task.link, '_blank', 'noopener');
+      showAlert('Timer started. Complete on target page, then return here.');
+    }
+
+    async function processTimers(user){
+      const prefix = `taskTimer_${user.uid}_`;
+      const toProcess = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i); if (k && k.startsWith(prefix)) toProcess.push(k);
+      }
+      for (const k of toProcess){
+        const data = JSON.parse(localStorage.getItem(k) || '{}');
+        const elapsed = (Date.now() - (data.startTime||0))/1000;
+        if (elapsed >= (data.seconds||30)){
+          localStorage.removeItem(k);
+          const taskId = k.replace(prefix,'');
+          const uRef = ref(db, 'users/'+user.uid);
+          const snap = await get(uRef);
+          const d = snap.val()||{};
+          const newPts = (d.points||0) + (data.reward||0);
+          await update(uRef, {
+            points: newPts,
+            ['activity/'+Date.now()]: { title: `Task: ${data.title||'Completed'}`, points: data.reward||0, icon:'fa-list-check', color:'#34c759', timestamp: serverTimestamp() },
+            ['taskProgress/'+taskId+'/'+new Date().toDateString()]: { completedAt: serverTimestamp() }
+          });
+          showAlert(`+${data.reward||0} points added!`);
+          mePtsEl.textContent = newPts;
+        }
+      }
+    }
+
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href='login.html'; return; }
+      onValue(ref(db, 'users/'+user.uid), (s)=>{
+        const me = s.val()||{};
+        state.me = me;
+        meNameEl.textContent = me.name || 'User';
+        mePtsEl.textContent = me.points || 0;
+        premPill.style.display = me.isPremium ? 'inline-flex' : 'none';
+        render();
+      });
+      onValue(ref(db, 'tasks'), (s)=>{
+        const v = s.val()||{};
+        state.tasks = Object.entries(v).map(([id,t])=> ({ id, ...t }));
+        render();
+      });
+      // process timers after initial render
+      setTimeout(()=> processTimers(user), 600);
+    });
+  </script>
+</body>
+</html>

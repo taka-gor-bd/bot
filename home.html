@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <title>EarnHub - Final Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{--primary-color:#6a11cb;--secondary-color:#2575fc;--premium-color:#ff9f0a;--green-color:#34c759;--dark-bg:#0d0d0d;--card-bg:#1c1c1e;--text-primary:#ffffff;--text-secondary:#a1a1aa;}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background-color:var(--dark-bg);color:var(--text-primary);padding-bottom:90px}
+    .container{padding:20px 15px}
+    .user-header{display:flex;align-items:center;margin-bottom:30px}
+    .user-avatar{width:50px;height:50px;border-radius:50%;border:2px solid var(--primary-color);margin-right:15px;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .user-avatar img{width:100%;height:100%;border-radius:50%}
+    .user-info{flex-grow:1}
+    .user-name{font-size:18px;font-weight:600}
+    .user-status{font-size:13px;color:var(--premium-color);font-weight:500;display:flex;align-items:center;gap:5px}
+    .notification-icon{font-size:22px;color:var(--text-secondary);cursor:pointer}
+    .main-balance-card{background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));border-radius:20px;padding:25px;text-align:center;margin-bottom:30px}
+    .balance-card-title{font-size:16px;color:rgba(255,255,255,.8);margin-bottom:5px}
+    .balance-points{font-size:48px;font-weight:800}
+    .balance-usd{font-size:18px;color:rgba(255,255,255,.8)}
+    .section-title{font-size:22px;font-weight:600;margin-bottom:20px}
+    .earning-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:30px}
+    .earning-card{background-color:var(--card-bg);border-radius:15px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--text-primary);transition:transform .2s,background-color .2s}
+    .earning-card:hover{transform:translateY(-5px);background-color:#2c2c2e}
+    .earning-icon{font-size:28px;width:55px;height:55px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .earning-label{font-size:15px;font-weight:500}
+    .activity-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+    .history-button{background:none;border:none;color:var(--primary-color);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
+    .activity-list{display:flex;flex-direction:column;gap:10px}
+    .activity-item{display:flex;align-items:center;background-color:var(--card-bg);padding:15px;border-radius:12px}
+    .activity-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-right:15px}
+    .activity-details{flex-grow:1}
+    .activity-details .title{font-size:16px;font-weight:500}
+    .activity-details .timestamp{font-size:12px;color:var(--text-secondary)}
+    .activity-points{font-size:16px;font-weight:600;color:var(--green-color)}
+    .navigation{position:fixed;bottom:0;left:0;right:0;background-color:#101010;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom));border-top:1px solid #2a2a2a}
+    .nav-item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--text-secondary);flex-grow:1}
+    .nav-item.active{color:var(--primary-color)}
+    .nav-item .nav-icon{font-size:24px;margin-bottom:5px}
+    .nav-label{font-size:12px;font-weight:500}
+  </style>
+</head>
+<body>
+  <div class="container" id="home-container">
+    <header class="user-header">
+      <div class="user-avatar" id="user-avatar-container"><i class="fas fa-user-circle"></i></div>
+      <div class="user-info">
+        <div class="user-name"></div>
+        <div class="user-status" id="premium-status" style="display:none;"><i class="fas fa-crown"></i> Premium</div>
+      </div>
+      <i class="fas fa-bell notification-icon"></i>
+    </header>
+
+    <div class="main-balance-card">
+      <p class="balance-card-title">YOUR TOTAL POINTS</p>
+      <div class="balance-points" id="balance-points">0</div>
+      <p class="balance-usd">≈ $<span id="balance-usd">0.00</span></p>
+    </div>
+
+    <section class="earning-options">
+      <h2 class="section-title">Earning Options</h2>
+      <div class="earning-grid">
+        <a href="#" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(52, 199, 89, 0.2); color: var(--green-color);"><i class="fas fa-calendar-check"></i></div>
+          <span class="earning-label">Daily Bonus</span>
+        </a>
+        <a href="games.html" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(255, 159, 10, 0.2); color: var(--orange-color);"><i class="fas fa-gamepad"></i></div>
+          <span class="earning-label">Games</span>
+        </a>
+        <a href="ads.html" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(255, 59, 48, 0.2); color: red;"><i class="fas fa-tv"></i></div>
+          <span class="earning-label">Watch Ads</span>
+        </a>
+        <a href="tasks.html" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(94, 92, 230, 0.2); color: var(--primary-color);"><i class="fas fa-tasks"></i></div>
+          <span class="earning-label">All Tasks</span>
+        </a>
+        <a href="premium.html" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(255, 159, 10, 0.2); color: var(--premium-color);"><i class="fas fa-star"></i></div>
+          <span class="earning-label">Premium</span>
+        </a>
+        <a href="leaderboard.html" class="earning-card">
+          <div class="earning-icon" style="background-color: rgba(0, 122, 255, 0.2); color: #0a84ff;"><i class="fas fa-trophy"></i></div>
+          <span class="earning-label">Leaderboard</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="recent-activity">
+      <div class="activity-header">
+        <h2 class="section-title" style="margin-bottom: 0;">Recent Earnings</h2>
+        <a href="referral_history.html" class="history-button">View Full History <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="activity-list" id="activity-list"></div>
+    </section>
+  </div>
+
+  <nav class="navigation">
+    <a href="home.html" class="nav-item active"><i class="fas fa-home nav-icon"></i><span class="nav-label">Home</span></a>
+    <a href="tasks.html" class="nav-item"><i class="fas fa-list-check nav-icon"></i><span class="nav-label">Tasks</span></a>
+    <a href="premium.html" class="nav-item"><i class="fas fa-star nav-icon"></i><span class="nav-label">Premium</span></a>
+    <a href="withdraw.html" class="nav-item"><i class="fas fa-wallet nav-icon"></i><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" class="nav-item"><i class="fas fa-user nav-icon"></i><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    const userNameEl = document.querySelector('.user-name');
+    const userAvatarContainer = document.getElementById('user-avatar-container');
+    const premiumStatusEl = document.getElementById('premium-status');
+    const balancePointsEl = document.getElementById('balance-points');
+    const balanceUsdEl = document.getElementById('balance-usd');
+    const activityListContainer = document.getElementById('activity-list');
+
+    function fetchAndDisplayData(user) {
+      const userRef = ref(database, 'users/' + user.uid);
+      const activityRef = ref(database, 'activity/' + user.uid);
+
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          userNameEl.textContent = data.name || 'User';
+          const points = data.points || 0;
+          balancePointsEl.textContent = points.toLocaleString();
+          balanceUsdEl.textContent = (points / 1000).toFixed(2);
+          premiumStatusEl.style.display = data.isPremium ? 'flex' : 'none';
+          if (data.avatarUrl) userAvatarContainer.innerHTML = `<img src="${data.avatarUrl}" alt="User Avatar">`;
+          else userAvatarContainer.innerHTML = `<i class="fas fa-user-circle"></i>`;
+        }
+      });
+
+      onValue(activityRef, (snapshot) => {
+        activityListContainer.innerHTML = '';
+        const activities = snapshot.val();
+        if (activities) {
+          const recentActivities = Object.values(activities).sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
+          recentActivities.forEach(activity => {
+            const el = document.createElement('div');
+            el.className = 'activity-item';
+            el.innerHTML = `
+              <div class="activity-icon" style="background-color: ${activity.color}20; color: ${activity.color};">
+                <i class="fas ${activity.icon}"></i>
+              </div>
+              <div class="activity-details">
+                <div class="title">${activity.title}</div>
+                <div class="timestamp">${activity.time || new Date(activity.timestamp).toLocaleDateString()}</div>
+              </div>
+              <span class="activity-points">+ ${activity.points}</span>
+            `;
+            activityListContainer.appendChild(el);
+          });
+        }
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) fetchAndDisplayData(user);
+      else window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>

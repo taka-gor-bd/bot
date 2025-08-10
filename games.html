@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+  <title>Games - Memory Match</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{--primary:#6a11cb;--secondary:#2575fc;--bg:#0d0d0d;--card:#1c1c1e;--muted:#a1a1aa;--green:#34c759;--red:#ff3b30}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;padding-bottom:90px}
+    .container{padding:20px 15px;max-width:520px;margin:0 auto}
+    .title{font-size:22px;font-weight:800;text-align:center;margin-bottom:12px}
+    .subtitle{font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+    .stat{background:var(--card);border:1px solid #2a2a2a;border-radius:12px;padding:10px;text-align:center}
+    .val{font-size:20px;font-weight:800}
+    .lab{font-size:11px;color:var(--muted)}
+    .board{max-width:420px;margin:12px auto;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .tile{position:relative;aspect-ratio:1/1;border-radius:12px;cursor:pointer;perspective:800px}
+    .inner{position:absolute;inset:0;transition:transform .4s;transform-style:preserve-3d}
+    .tile.flipped .inner, .tile.matched .inner{transform:rotateY(180deg)}
+    .face{position:absolute;inset:0;border:1px solid #2a2a2a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;backface-visibility:hidden}
+    .front{background:#151515;color:#888}
+    .back{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;transform:rotateY(180deg);font-size:24px}
+    .tile.matched .back{background:linear-gradient(135deg,#22c55e,#16a34a)}
+    .btn{display:block;width:100%;max-width:420px;margin:10px auto;background:linear-gradient(135deg,var(--primary),var(--secondary));border:0;color:#fff;font-weight:800;border-radius:12px;padding:12px;cursor:pointer}
+    .btn:disabled{background:#2a2a2a;color:#777}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#101010;border-top:1px solid #2a2a2a;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom))}
+    .nav a{display:flex;flex-direction:column;align-items:center;color:#a1a1aa;text-decoration:none}
+    .nav a.active{color:var(--primary)}
+    .nav i{font-size:22px;margin-bottom:4px}
+    .toast{position:fixed;top:-80px;left:50%;transform:translateX(-50%);background:var(--green);padding:10px 16px;border-radius:10px;transition:top .5s;z-index:1000}
+    .toast.err{background:var(--red)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Memory Match</div>
+    <div class="subtitle">৩০ সেকেন্ডে সব জোড়া মিলান। সময় শেষ হলে পয়েন্ট মিলবে না।</div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="plays">0</div><div class="lab">Plays Left</div></div>
+      <div class="stat"><div class="val" id="timer">0s</div><div class="lab">Time Left</div></div>
+      <div class="stat"><div class="val" id="pairs">0/12</div><div class="lab">Pairs Matched</div></div>
+    </div>
+    <div id="board" class="board" aria-live="polite" aria-label="Memory board"></div>
+    <button id="start" class="btn">Start Game</button>
+  </div>
+
+  <div id="toast" class="toast">Saved</div>
+
+  <div class="nav">
+    <a href="home.html"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="tasks.html"><i class="fas fa-list-check"></i><span>Tasks</span></a>
+    <a href="premium.html"><i class="fas fa-star"></i><span>Premium</span></a>
+    <a href="withdraw.html"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+    <a href="profile.html" class="active"><i class="fas fa-user"></i><span>Profile</span></a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Game config
+    const MAX_PLAYS_PER_DAY = 5;
+    const GAME_DURATION_SECONDS = 30;
+    const POINTS_PER_WIN = 50;
+    const PAIRS = 12; // 24 tiles
+
+    // UI refs
+    const boardEl = document.getElementById('board');
+    const playsEl = document.getElementById('plays');
+    const timerEl = document.getElementById('timer');
+    const pairsEl = document.getElementById('pairs');
+    const startBtn = document.getElementById('start');
+    const toast = document.getElementById('toast');
+
+    // State
+    const state = {
+      me: null,
+      playsLeft: MAX_PLAYS_PER_DAY,
+      tiles: [],         // {id, value, matched}
+      first: null,       // index
+      second: null,      // index
+      lock: false,
+      running: false,
+      matchedPairs: 0,
+      timeLeft: 0,
+      timerT: null
+    };
+
+    function showToast(msg, err=false){
+      toast.textContent = msg; toast.classList.toggle('err', !!err);
+      toast.style.top='16px'; clearTimeout(toast._t);
+      toast._t = setTimeout(()=> toast.style.top='-80px', 1800);
+    }
+
+    function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+    function newDeck(){
+      const base = Array.from({length: PAIRS}, (_,i)=> i+1); // 1..12
+      const deck = shuffle([...base, ...base]).map((v, idx)=> ({ id: idx, value: v, matched:false }));
+      state.tiles = deck;
+      state.first = null; state.second = null; state.lock = false;
+      state.matchedPairs = 0;
+    }
+
+    function draw(){
+      playsEl.textContent = String(state.playsLeft);
+      timerEl.textContent = `${state.timeLeft}s`;
+      pairsEl.textContent = `${state.matchedPairs}/${PAIRS}`;
+      boardEl.innerHTML = '';
+      state.tiles.forEach((t, idx)=>{
+        const flipped = t.matched || idx===state.first || idx===state.second;
+        const tile = document.createElement('button');
+        tile.className = 'tile' + (flipped ? ' flipped' : '') + (t.matched ? ' matched' : '');
+        tile.setAttribute('aria-label', flipped ? `Value ${t.value}` : 'Hidden tile');
+        tile.innerHTML = `
+          <div class="inner">
+            <div class="face front">?</div>
+            <div class="face back">${t.value}</div>
+          </div>
+        `;
+        tile.disabled = !state.running || state.lock || t.matched || flipped;
+        tile.addEventListener('click', ()=> clickTile(idx));
+        boardEl.appendChild(tile);
+      });
+      startBtn.disabled = state.running || state.playsLeft<=0;
+      startBtn.textContent = state.playsLeft<=0 ? 'No plays left' : (state.running ? 'Running...' : 'Start Game');
+    }
+
+    function tick(){
+      if (!state.running) return;
+      if (state.timeLeft<=0){ end(false); return; }
+      state.timeLeft -= 1; draw();
+      state.timerT = setTimeout(tick, 1000);
+    }
+
+    async function start(){
+      const user = auth.currentUser; if (!user) return;
+      if (state.playsLeft<=0 || state.running) return;
+      // Prepare deck
+      newDeck();
+      // Start round
+      state.timeLeft = GAME_DURATION_SECONDS;
+      state.running = true;
+      // decrement DB plays
+      await update(ref(db, 'users/'+user.uid), { gamePlaysLeft: state.playsLeft - 1 });
+      draw();
+      clearTimeout(state.timerT); state.timerT = setTimeout(tick, 1000);
+    }
+
+    function clickTile(idx){
+      if (state.lock || !state.running) return;
+      if (state.first===null){
+        state.first = idx; draw(); return;
+      }
+      if (state.second===null && idx!==state.first){
+        state.second = idx; draw();
+        checkMatch();
+      }
+    }
+
+    function checkMatch(){
+      const a = state.tiles[state.first], b = state.tiles[state.second];
+      if (!a || !b) return;
+      if (a.value === b.value){
+        // Match
+        state.lock = true;
+        setTimeout(()=>{
+          a.matched = b.matched = true;
+          state.first = state.second = null;
+          state.lock = false;
+          state.matchedPairs += 1;
+          draw();
+          if (state.matchedPairs === PAIRS) end(true);
+        }, 250);
+      } else {
+        // Mismatch -> flip back
+        state.lock = true;
+        setTimeout(()=>{
+          state.first = state.second = null;
+          state.lock = false;
+          draw();
+        }, 650);
+      }
+    }
+
+    async function end(success){
+      state.running = false; clearTimeout(state.timerT); draw();
+      const user = auth.currentUser; if (!user) return;
+      const uRef = ref(db, 'users/'+user.uid);
+      if (success){
+        await update(uRef, { dailyWins: (state.me?.dailyWins||0)+1 });
+        const currPts = state.me?.points || 0;
+        await update(uRef, {
+          points: currPts + POINTS_PER_WIN,
+          ['activity/'+Date.now()]: { title:'Game Win', points: POINTS_PER_WIN, icon:'fa-gamepad', color:'#34c759', timestamp: serverTimestamp() }
+        });
+        showToast(`You won! +${POINTS_PER_WIN} pts`);
+      } else {
+        await update(uRef, { dailyLosses: (state.me?.dailyLosses||0)+1 });
+        showToast('Time up! No points.', true);
+      }
+    }
+
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href='login.html'; return; }
+      const uRef = ref(db, 'users/'+user.uid);
+      onValue(uRef, (s)=>{
+        const d = s.val()||{};
+        state.me = d;
+        const today = new Date().toDateString();
+        if (d.gameLastPlayDate !== today){
+          state.playsLeft = MAX_PLAYS_PER_DAY;
+          update(uRef, {
+            gamePlaysLeft: MAX_PLAYS_PER_DAY,
+            dailyWins: 0,
+            dailyLosses: 0,
+            gameLastPlayDate: today
+          });
+        } else {
+          state.playsLeft = typeof d.gamePlaysLeft === 'number' ? d.gamePlaysLeft : MAX_PLAYS_PER_DAY;
+        }
+        draw();
+      });
+      startBtn.onclick = start;
+    });
+  </script>
+</body>
+</html>

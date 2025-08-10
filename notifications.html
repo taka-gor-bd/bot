@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>Notifications - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root{--primary:#6a11cb;--secondary:#2575fc;--bg:#0d0d0d;--card:#1c1c1e;--muted:#a1a1aa;--green:#34c759}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;padding-bottom:90px}
+    .container{padding:20px 15px;max-width:520px;margin:0 auto}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{font-size:22px;font-weight:800}
+    .badge{min-width:24px;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,var(--primary),var(--secondary));font-size:12px;text-align:center}
+    .btn{background:#141414;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{background:var(--card);border:1px solid #2a2a2a;border-radius:12px;padding:12px}
+    .row{display:flex;align-items:center;justify-content:space-between}
+    .ntitle{font-weight:700}
+    .time{font-size:11px;color:var(--muted)}
+    .msg{font-size:13px;color:#ddd;margin-top:6px}
+    .item.new{border-color:rgba(106,17,203,.5);box-shadow:0 0 0 2px rgba(106,17,203,.15) inset}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#101010;border-top:1px solid #2a2a2a;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom))}
+    .nav a{display:flex;flex-direction:column;align-items:center;color:#a1a1aa;text-decoration:none}
+    .nav a.active{color:var(--primary)}
+    .nav i{font-size:22px;margin-bottom:4px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">Notifications <span id="count" class="badge">0</span></div>
+      <button id="mark" class="btn"><i class="fas fa-check-double"></i> Mark all read</button>
+    </div>
+    <div id="list" class="list"></div>
+  </div>
+
+  <div class="nav">
+    <a href="home.html" class="active"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="tasks.html"><i class="fas fa-list-check"></i><span>Tasks</span></a>
+    <a href="premium.html"><i class="fas fa-star"></i><span>Premium</span></a>
+    <a href="withdraw.html"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+    <a href="profile.html"><i class="fas fa-user"></i><span>Profile</span></a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const listEl = document.getElementById('list');
+    const markBtn = document.getElementById('mark');
+    const countEl = document.getElementById('count');
+
+    let seenTs = 0;
+    let notifs = [];
+
+    function render(){
+      listEl.innerHTML = '';
+      const unseen = notifs.filter(n=> (n.timestamp||0) > (seenTs||0)).length;
+      countEl.textContent = String(unseen);
+      notifs.forEach(n=>{
+        const row = document.createElement('div');
+        const isNew = (n.timestamp||0) > (seenTs||0);
+        row.className = 'item'+(isNew ? ' new' : '');
+        row.innerHTML = `
+          <div class="row">
+            <div class="ntitle">${n.title || 'Notification'}</div>
+            <div class="time">${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</div>
+          </div>
+          ${n.message ? `<div class="msg">${n.message}</div>` : ''}
+        `;
+        listEl.appendChild(row);
+      });
+      if (notifs.length===0){
+        const empty = document.createElement('div'); empty.className='item';
+        empty.innerHTML = '<div class="ntitle" style="color:#a1a1aa;">No notifications yet.</div>';
+        listEl.appendChild(empty);
+      }
+    }
+
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href='login.html'; return; }
+      onValue(ref(db, 'users/'+user.uid+'/notificationsSeen'), (s)=>{
+        seenTs = s.val() || 0; render();
+      });
+      onValue(ref(db, 'notifications'), (s)=>{
+        const v = s.val()||{};
+        notifs = Object.values(v).sort((a,b)=> (b.timestamp||0)-(a.timestamp||0));
+        render();
+      });
+      markBtn.addEventListener('click', ()=>{
+        update(ref(db, 'users/'+user.uid), { notificationsSeen: Date.now() });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>User Profile - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{--primary-color:#6a11cb;--secondary-color:#2575fc;--premium-color:#ff9f0a;--green-color:#34c759;--red-color:#ff3b30;--dark-bg:#0d0d0d;--card-bg:#1c1c1e;--text-primary:#ffffff;--text-secondary:#a1a1aa;--gold-color:#ffd700}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background-color:var(--dark-bg);color:var(--text-primary);padding-bottom:90px}
+    .container{padding:20px 15px}
+    .main-app-header{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background-color:var(--dark-bg);position:sticky;top:0;z-index:100}
+    .header-left{display:flex;align-items:center}
+    .header-avatar{width:35px;height:35px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid var(--primary-color)}
+    .header-user-info{display:flex;flex-direction:column}
+    .header-user-name{font-size:15px;font-weight:600}
+    .header-user-status{font-size:10px;color:var(--premium-color);font-weight:500;display:flex;align-items:center;gap:4px}
+    .header-notification-icon{font-size:20px;color:var(--text-secondary);cursor:pointer}
+    .profile-section-header{display:flex;flex-direction:column;align-items:center;margin-bottom:30px}
+    .profile-avatar-wrapper{position:relative;cursor:pointer}
+    .profile-avatar{width:100px;height:100px;border-radius:50%;border:3px solid var(--primary-color);object-fit:cover;margin-bottom:15px}
+    .edit-icon{position:absolute;bottom:15px;right:0;background-color:var(--primary-color);color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--dark-bg);font-size:14px}
+    .profile-name{font-size:22px;font-weight:600}
+    .profile-email{font-size:14px;color:var(--text-secondary)}
+    .account-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:30px}
+    .stat-card{background-color:var(--card-bg);border-radius:12px;padding:15px 5px;text-align:center}
+    .stat-value{font-size:20px;font-weight:700;color:var(--primary-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stat-label{font-size:12px;color:var(--text-secondary);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .referral-card{background:linear-gradient(135deg,var(--gold-color),var(--primary-color));border-radius:16px;padding:25px;text-align:center;margin-bottom:20px;color:black}
+    .referral-title{font-size:20px;font-weight:700;margin-bottom:15px;color:white}
+    .referral-link-wrapper{display:flex;align-items:center;background-color:rgba(0,0,0,0.2);border-radius:10px;padding:10px 15px;margin-bottom:20px}
+    .referral-link{flex-grow:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;text-align:left;color:white}
+    .copy-button{background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:10px}
+    .invite-button{width:100%;padding:15px;border:none;border-radius:10px;background-color:white;color:var(--primary-color);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+    .menu-list{display:flex;flex-direction:column;gap:10px}
+    .menu-item{display:flex;align-items:center;background-color:var(--card-bg);padding:15px;border-radius:10px;cursor:pointer}
+    .menu-icon{font-size:18px;color:var(--text-secondary);width:30px;text-align:center;margin-right:15px}
+    .menu-text{flex-grow:1;font-size:16px;font-weight:500}
+    .menu-item.logout .menu-text,.menu-item.logout .menu-icon{color:var(--red-color)}
+    .menu-arrow{font-size:16px;color:var(--text-secondary)}
+    .navigation{position:fixed;bottom:0;left:0;right:0;background-color:#101010;display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom));border-top:1px solid #2a2a2a}
+    .nav-item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--text-secondary);flex-grow:1}
+    .nav-item.active{color:var(--primary-color)}
+    .nav-icon{font-size:24px;margin-bottom:5px}
+    .nav-label{font-size:12px;font-weight:500}
+    /* Modal for Blue Tick */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);align-items:center;justify-content:center;z-index:1000}
+    .modal-content{background:var(--card-bg);padding:25px;border-radius:20px;width:90%;max-width:420px;text-align:left;position:relative}
+    .modal-close-btn{position:absolute;top:15px;right:15px;font-size:20px;color:var(--text-secondary);cursor:pointer}
+    .pill-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    .pill{padding:8px 12px;border-radius:999px;border:1px solid #3a3a3c;color:#fff;font-size:13px;cursor:pointer}
+    .pill.active{background:var(--primary-color);border-color:var(--primary-color)}
+    .field{margin-top:10px}
+    .field label{font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px}
+    .input{width:100%;padding:12px;background:#2c2c2e;border:1px solid #3a3a3c;border-radius:8px;color:#fff}
+    .submit{width:100%;margin-top:12px;padding:12px;border:none;border-radius:10px;background:var(--primary-color);color:#fff;font-weight:700}
+    .hint{font-size:12px;color:var(--text-secondary)}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:#0ea5e9;color:#fff;border-radius:6px;padding:4px 8px;font-size:12px}
+  </style>
+</head>
+<body>
+  <header class="main-app-header">
+    <div class="header-left">
+      <img src="/placeholder.svg" alt="User Avatar" class="header-avatar" id="header-avatar-img">
+      <div class="header-user-info">
+        <div class="header-user-name" id="header-user-name"></div>
+        <div class="header-user-status" id="header-premium-status" style="display:none;"><i class="fas fa-crown"></i> Premium User</div>
+      </div>
+    </div>
+    <div class="header-right"><i class="fas fa-bell header-notification-icon"></i></div>
+  </header>
+
+  <div class="container">
+    <header class="profile-section-header">
+      <div class="profile-avatar-wrapper" id="avatar-wrapper">
+        <img src="/placeholder.svg" alt="User Avatar" class="profile-avatar" id="profile-avatar-img">
+        <div class="edit-icon"><i class="fas fa-pencil-alt"></i></div>
+      </div>
+      <h2 class="profile-name" id="profile-name"></h2>
+      <p class="profile-email" id="profile-email"></p>
+      <div id="verify-badge" style="margin-top:8px;"></div>
+    </header>
+
+    <div class="account-stats-grid">
+      <div class="stat-card"><div class="stat-value" id="total-points-display"><i class="fas fa-coins"></i> 0</div><div class="stat-label">Total Points</div></div>
+      <div class="stat-card"><div class="stat-value" id="total-earned-display">$0.00</div><div class="stat-label">Total Earned</div></div>
+      <div class="stat-card"><div class="stat-value" id="current-rank-display">#N/A</div><div class="stat-label">Current Rank</div></div>
+    </div>
+
+    <div class="referral-card">
+      <h3 class="referral-title">Invite Friends & Earn More!</h3>
+      <p style="color:white;font-size:13px;margin-bottom:10px;">Earn 50 Points for each referral!</p>
+      <div class="referral-link-wrapper">
+        <span class="referral-link" id="referral-code-display">Loading...</span>
+        <button class="copy-button" id="copy-btn" title="Copy code"><i class="far fa-copy"></i></button>
+      </div>
+      <button class="invite-button"><i class="fas fa-share-alt"></i> Invite Friends</button>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-item" id="blue-tick-sub">
+        <i class="fas fa-badge-check menu-icon"></i>
+        <span class="menu-text">Blue Tick Subscription</span>
+        <span class="menu-arrow"><i class="fas fa-chevron-right"></i></span>
+      </div>
+      <a href="withdraw.html" class="menu-item" style="text-decoration:none;color:inherit;">
+        <i class="fas fa-hand-holding-dollar menu-icon"></i>
+        <span class="menu-text">Withdraw</span>
+        <i class="fas fa-chevron-right menu-arrow"></i>
+      </a>
+      <div class="menu-item logout" id="logout-button">
+        <i class="fas fa-sign-out-alt menu-icon"></i>
+        <span class="menu-text">Logout</span>
+        <i class="fas fa-chevron-right menu-arrow"></i>
+      </div>
+    </div>
+  </div>
+
+   Blue Tick Modal 
+  <div class="modal-overlay" id="blue-modal">
+    <div class="modal-content">
+      <i class="fas fa-times modal-close-btn" id="blue-close"></i>
+      <h2 style="margin-top:0;color:var(--primary-color);margin-bottom:14px;">Blue Tick Subscription</h2>
+      <div class="field">
+        <label>Duration</label>
+        <div class="pill-row" id="term-row">
+          <div class="pill active" data-term="month">Monthly ($3)</div>
+          <div class="pill" data-term="year">Yearly ($30)</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Method</label>
+        <div class="pill-row" id="method-row">
+          <div class="pill active" data-method="crypto">Crypto</div>
+          <div class="pill" data-method="binance">Binance</div>
+          <div class="pill" data-method="bybit">Bybit</div>
+          <div class="pill" data-method="bitget">Bitget</div>
+        </div>
+      </div>
+      <div class="field" id="crypto-types" style="display:block;">
+        <label>Crypto Network</label>
+        <div class="pill-row" id="crypto-row">
+          <div class="pill active" data-crypto="USDT_TRC20">USDT (TRC20)</div>
+          <div class="pill" data-crypto="BTC">BTC</div>
+          <div class="pill" data-crypto="BNB_BEP20">BNB (BEP20)</div>
+        </div>
+        <div class="hint" id="addr-hint" style="margin-top:6px;">Send $<span id="blue-amount">3</span> to: <span id="blue-address">ADDRESS_NOT_SET</span></div>
+      </div>
+      <div class="field" id="id-hint" style="display:none;">
+        <div class="hint">Send $<span id="blue-amount-id">3</span> to <span id="id-type">Binance</span> receiver ID: <span id="recv-id">NOT_SET</span></div>
+      </div>
+      <div class="field">
+        <label>Proof (Txn Hash / Your ID)</label>
+        <input class="input" id="blue-proof" placeholder="Paste your transaction hash or your exchange ID">
+      </div>
+      <button class="submit" id="blue-submit">Submit Proof</button>
+      <div class="hint" style="margin-top:6px;">We will verify and activate the Blue Tick after approval.</div>
+    </div>
+  </div>
+
+  <div class="navigation">
+    <a href="home.html" class="nav-item"><i class="fas fa-home nav-icon"></i><span class="nav-label">Home</span></a>
+    <a href="tasks.html" class="nav-item"><i class="fas fa-list-check nav-icon"></i><span class="nav-label">Tasks</span></a>
+    <a href="premium.html" class="nav-item"><i class="fas fa-star nav-icon"></i><span class="nav-label">Premium</span></a>
+    <a href="wallet.html" class="nav-item"><i class="fas fa-wallet nav-icon"></i><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" class="nav-item active"><i class="fas fa-user nav-icon"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, update, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Refs
+    const headerAvatarImgEl = document.getElementById('header-avatar-img');
+    const headerUserNameEl = document.getElementById('header-user-name');
+    const headerPremiumStatusEl = document.getElementById('header-premium-status');
+    const profileAvatarImgEl = document.getElementById('profile-avatar-img');
+    const profileNameEl = document.getElementById('profile-name');
+    const profileEmailEl = document.getElementById('profile-email');
+    const totalPointsDisplayEl = document.getElementById('total-points-display');
+    const totalEarnedDisplayEl = document.getElementById('total-earned-display');
+    const currentRankDisplayEl = document.getElementById('current-rank-display');
+    const referralCodeDisplayEl = document.getElementById('referral-code-display');
+    const logoutButton = document.getElementById('logout-button');
+    const verifyBadge = document.getElementById('verify-badge');
+
+    // Blue Modal
+    const blueModal = document.getElementById('blue-modal');
+    const blueOpen = document.getElementById('blue-tick-sub');
+    const blueClose = document.getElementById('blue-close');
+    const termRow = document.getElementById('term-row');
+    const methodRow = document.getElementById('method-row');
+    const cryptoRow = document.getElementById('crypto-row');
+    const blueAmount = document.getElementById('blue-amount');
+    const blueAmountId = document.getElementById('blue-amount-id');
+    const addrHint = document.getElementById('addr-hint');
+    const idHint = document.getElementById('id-hint');
+    const idType = document.getElementById('id-type');
+    const recvId = document.getElementById('recv-id');
+    const blueAddress = document.getElementById('blue-address');
+    const blueProof = document.getElementById('blue-proof');
+    const blueSubmit = document.getElementById('blue-submit');
+
+    // Settings loaded from /settings/payment
+    let settings = {
+      binancePayId: 'BINANCEPAYID1234567890',
+      bybitUid: '',
+      bitgetUid: '',
+      cryptoAddresses: { USDT_TRC20: '', BTC: '', BNB_BEP20: '' },
+    };
+
+    let blue = { term: 'month', method: 'crypto', crypto: 'USDT_TRC20' };
+
+    function setActiveInRow(row, key, value) {
+      row.querySelectorAll('.pill').forEach(p => {
+        const match = p.dataset[key] === value;
+        p.classList.toggle('active', match);
+      });
+    }
+    function priceForTerm(term){ return term==='year' ? 30 : 3; }
+
+    function refreshBlueUI() {
+      const amt = priceForTerm(blue.term);
+      blueAmount.textContent = String(amt);
+      blueAmountId.textContent = String(amt);
+      if (blue.method === 'crypto') {
+        addrHint.style.display = 'block'; idHint.style.display = 'none';
+        blueAddress.textContent = settings.cryptoAddresses[blue.crypto] || 'ADDRESS_NOT_SET';
+      } else {
+        addrHint.style.display = 'none'; idHint.style.display = 'block';
+        if (blue.method === 'binance') { idType.textContent='Binance'; recvId.textContent=settings.binancePayId||'NOT_SET'; }
+        if (blue.method === 'bybit') { idType.textContent='Bybit'; recvId.textContent=settings.bybitUid||'NOT_SET'; }
+        if (blue.method === 'bitget') { idType.textContent='Bitget'; recvId.textContent=settings.bitgetUid||'NOT_SET'; }
+      }
+    }
+
+    termRow.addEventListener('click', (e)=>{
+      const pill = e.target.closest('.pill'); if (!pill) return;
+      blue.term = pill.dataset.term; setActiveInRow(termRow,'term', blue.term); refreshBlueUI();
+    });
+    methodRow.addEventListener('click', (e)=>{
+      const pill = e.target.closest('.pill'); if (!pill) return;
+      blue.method = pill.dataset.method; setActiveInRow(methodRow,'method', blue.method); refreshBlueUI();
+    });
+    cryptoRow.addEventListener('click', (e)=>{
+      const pill = e.target.closest('.pill'); if (!pill) return;
+      blue.crypto = pill.dataset.crypto; setActiveInRow(cryptoRow,'crypto', blue.crypto); refreshBlueUI();
+    });
+
+    blueOpen.addEventListener('click', ()=> { blueModal.style.display='flex'; refreshBlueUI(); });
+    blueClose.addEventListener('click', ()=> blueModal.style.display='none');
+    blueModal.addEventListener('click', (e)=> { if (e.target.id==='blue-modal') blueModal.style.display='none'; });
+
+    document.getElementById('copy-btn').addEventListener('click', ()=>{
+      const code = referralCodeDisplayEl.textContent;
+      navigator.clipboard.writeText(code||'').then(()=> alert('Copied'));
+    });
+
+    logoutButton.addEventListener('click', ()=> signOut(auth).then(()=> window.location.href='login.html'));
+
+    onAuthStateChanged(auth, (u)=>{
+      if (!u) { window.location.href='login.html'; return; }
+      const uRef = ref(db, 'users/'+u.uid);
+      onValue(uRef, (s)=>{
+        const d = s.val()||{};
+        headerAvatarImgEl.src = d.avatarUrl || 'https://i.pravatar.cc/150';
+        headerUserNameEl.textContent = d.name || 'Guest';
+        headerPremiumStatusEl.style.display = d.isPremium ? 'flex' : 'none';
+        profileAvatarImgEl.src = d.avatarUrl || 'https://i.pravatar.cc/150';
+        profileNameEl.textContent = d.name || 'Guest';
+        profileEmailEl.textContent = d.email || '';
+        totalPointsDisplayEl.innerHTML = `<i class="fas fa-coins"></i> ${d.points || 0}`;
+        totalEarnedDisplayEl.textContent = `$${((d.points || 0)/1000).toFixed(2)}`;
+        currentRankDisplayEl.textContent = `#${d.currentRank || 'N/A'}`;
+        referralCodeDisplayEl.textContent = d.referralCode || 'N/A';
+
+        // badge
+        verifyBadge.innerHTML = '';
+        if (d.blueTick?.active) {
+          const b = document.createElement('div'); b.className='badge';
+          b.innerHTML = '<i class="fas fa-circle-check"></i> Verified';
+          verifyBadge.appendChild(b);
+        } else if (d.isPremium) {
+          const b = document.createElement('div'); b.className='badge'; b.style.background='#f59e0b';
+          b.innerHTML = '<i class="fas fa-crown"></i> Premium';
+          verifyBadge.appendChild(b);
+        }
+      });
+
+      // Load Admin Settings
+      onValue(ref(db, 'settings/payment'), (s)=>{
+        const v = s.val() || {};
+        settings.binancePayId = v.binancePayId || settings.binancePayId;
+        settings.bybitUid = v.bybitUid || '';
+        settings.bitgetUid = v.bitgetUid || '';
+        settings.cryptoAddresses = v.cryptoAddresses || settings.cryptoAddresses;
+        refreshBlueUI();
+      });
+
+      blueSubmit.addEventListener('click', ()=>{
+        const proof = blueProof.value.trim();
+        if (!proof) { alert('Please enter proof'); return; }
+        const payload = {
+          userId: u.uid,
+          planId: 'blue-tick',
+          plan: `Blue Tick (${blue.term})`,
+          amount: priceForTerm(blue.term),
+          paymentMethod: blue.method === 'crypto' ? `Crypto (${blue.crypto})` : (blue.method.charAt(0).toUpperCase()+blue.method.slice(1)),
+          proof, cryptoType: blue.method==='crypto'? blue.crypto : null,
+          status: 'pending', timestamp: serverTimestamp()
+        };
+        push(ref(db,'pendingPayments'), payload).then(()=>{
+          push(ref(db,'depositRequests'), { ...payload, proofUrl:'#' }).then(()=>{
+            update(ref(db,'users/'+u.uid), { pendingPlanId: 'blue-tick' }).then(()=>{
+              blueProof.value=''; blueModal.style.display='none'; alert('Submitted! We will verify soon.');
+            });
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
