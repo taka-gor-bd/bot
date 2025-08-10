@@ -1,0 +1,161 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useAuth } from "@/components/auth-provider"
+import { db } from "@/lib/firebase"
+import { onValue, ref, update, serverTimestamp } from "firebase/database"
+import { Button } from "@/components/ui/button"
+
+const MAX_PLAYS_PER_DAY = 5
+const GAME_DURATION_SECONDS = 30
+const NUM_CELLS = 25
+const POINTS_PER_WIN = 50
+
+export default function GamesPage() {
+  const { user } = useAuth()
+  const [playsLeft, setPlaysLeft] = useState(MAX_PLAYS_PER_DAY)
+  const [timer, setTimer] = useState(0)
+  const [running, setRunning] = useState(false)
+  const [grid, setGrid] = useState<number[]>([])
+  const [next, setNext] = useState(1)
+  const [wins, setWins] = useState(0)
+  const [losses, setLosses] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    const uRef = ref(db, `users/${user.uid}`)
+    const unsub = onValue(uRef, (s) => {
+      const d = s.val() || {}
+      const today = new Date().toDateString()
+      if (d.gameLastPlayDate !== today) {
+        setPlaysLeft(MAX_PLAYS_PER_DAY)
+        setWins(0)
+        setLosses(0)
+        update(uRef, {
+          gamePlaysLeft: MAX_PLAYS_PER_DAY,
+          dailyWins: 0,
+          dailyLosses: 0,
+          gameLastPlayDate: today,
+        })
+      } else {
+        setPlaysLeft(d.gamePlaysLeft ?? MAX_PLAYS_PER_DAY)
+        setWins(d.dailyWins || 0)
+        setLosses(d.dailyLosses || 0)
+      }
+    })
+    return () => unsub()
+  }, [user])
+
+  const shuffle = (arr: number[]) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }
+
+  const start = async () => {
+    if (!user) return
+    if (playsLeft <= 0) return
+    const cells = shuffle([...Array(NUM_CELLS)].map((_, i) => i + 1))
+    setGrid(cells)
+    setNext(1)
+    setTimer(GAME_DURATION_SECONDS)
+    setRunning(true)
+    await update(ref(db, `users/${user.uid}`), { gamePlaysLeft: playsLeft - 1 })
+  }
+
+  useEffect(() => {
+    if (!running) return
+    if (timer <= 0) {
+      end(false)
+      return
+    }
+    const t = setTimeout(() => setTimer((x) => x - 1), 1000)
+    return () => clearTimeout(t)
+  }, [running, timer])
+
+  const clickCell = (n: number) => {
+    if (!running) return
+    if (n === next) {
+      setGrid((g) => g.filter((x) => x !== n))
+      setNext((x) => x + 1)
+      if (n === NUM_CELLS) end(true)
+    }
+  }
+
+  const end = async (success: boolean) => {
+    setRunning(false)
+    if (!user) return
+    const uRef = ref(db, `users/${user.uid}`)
+    if (success) {
+      setWins((w) => w + 1)
+      await update(uRef, {
+        dailyWins: wins + 1,
+        points: await new Promise<number>((res) => {
+          onValue(
+            uRef,
+            (s) => {
+              res((s.val()?.points || 0) + POINTS_PER_WIN)
+            },
+            { onlyOnce: true },
+          )
+        }),
+      })
+      await update(uRef, {
+        [`activity/${Date.now()}`]: {
+          title: "Game Win",
+          points: POINTS_PER_WIN,
+          icon: "fa-gamepad",
+          color: "#34c759",
+          timestamp: serverTimestamp(),
+        },
+      })
+    } else {
+      setLosses((l) => l + 1)
+      await update(uRef, { dailyLosses: losses + 1 })
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-5">
+      <h1 className="mb-4 text-center text-2xl font-bold">Number Sequence Challenge</h1>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="rounded-xl border p-3 text-center">
+          <div className="text-2xl font-bold">{playsLeft}</div>
+          <div className="text-xs text-muted-foreground">Plays Left</div>
+        </div>
+        <div className="rounded-xl border p-3 text-center">
+          <div className="text-2xl font-bold">{timer}s</div>
+          <div className="text-xs text-muted-foreground">Time Left</div>
+        </div>
+        <div className="rounded-xl border p-3 text-center">
+          <div className="text-2xl font-bold">{next}</div>
+          <div className="text-xs text-muted-foreground">Next Number</div>
+        </div>
+      </div>
+      <div className="mx-auto grid aspect-square max-w-xs grid-cols-5 gap-2">
+        {Array.from({ length: NUM_CELLS }).map((_, i) => {
+          const n = i + 1
+          const present = grid.includes(n)
+          return (
+            <button
+              key={n}
+              onClick={() => present && clickCell(n)}
+              className={`flex items-center justify-center rounded-md border text-sm font-semibold ${
+                present ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {n}
+            </button>
+          )
+        })}
+      </div>
+      <div className="mt-4">
+        <Button className="w-full" onClick={start} disabled={running || playsLeft <= 0}>
+          {playsLeft <= 0 ? "No plays left" : running ? "Running..." : "Start Game"}
+        </Button>
+      </div>
+    </div>
+  )
+}
