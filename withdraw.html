@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>Withdraw - EarnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root{--primary:#6a11cb;--secondary:#2575fc;--bg:#0d0d0d;--card:#1c1c1e;--muted:#a1a1aa;--green:#34c759;--red:#ff3b30;--amber:#ff9f0a;--border:#2a2a2a}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;padding-bottom:90px}
+    .container{padding:20px 15px;max-width:520px;margin:0 auto}
+    .title{font-size:22px;font-weight:800;text-align:center;margin-bottom:12px}
+    .balance{background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:14px;padding:18px;text-align:center;margin-bottom:14px}
+    .balance .lab{font-size:12px;opacity:.85}
+    .balance .pts{font-size:32px;font-weight:900}
+    .balance .usd{font-size:13px;opacity:.9}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .form{display:grid;gap:10px;margin-bottom:14px}
+    .field{display:grid;gap:6px}
+    .label{font-size:12px;color:var(--muted)}
+    .input, .select{background:#141416;border:1px solid var(--border);border-radius:10px;padding:12px;color:#fff}
+    .btn{width:100%;background:linear-gradient(135deg,var(--primary),var(--secondary));border:0;color:#fff;font-weight:800;border-radius:12px;padding:12px;cursor:pointer}
+    .btn:disabled{background:#2a2a2a;color:#777}
+    .help{font-size:12px;color:var(--muted)}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+    .stat{background:#121214;border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+    .stat .v{font-size:18px;font-weight:900}
+    .stat .k{font-size:11px;color:var(--muted)}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);background:#121214;border-radius:12px;padding:10px}
+    .left{display:flex;flex-direction:column}
+    .method{font-size:13px;font-weight:700}
+    .meta{font-size:11px;color:var(--muted)}
+    .status{font-size:11px;font-weight:900;border-radius:999px;padding:4px 8px}
+    .pending{background:rgba(255,159,10,.18);color:var(--amber)}
+    .approved{background:rgba(52,199,89,.18);color:var(--green)}
+    .rejected{background:rgba(255,59,48,.18);color:var(--red)}
+    .cancelled{background:#2a2a2a;color:#bbb}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn-sm{border:1px solid var(--border);background:#141416;color:#fff;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer;font-size:12px}
+    .btn-sm.red{border-color:#4a1e1e;background:#2a0f0f;color:#ffb3b3}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#101010;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 calc(15px + env(safe-area-inset-bottom))}
+    .nav a{display:flex;flex-direction:column;align-items:center;color:#a1a1aa;text-decoration:none}
+    .nav a.active{color:var(--primary)}
+    .nav i{font-size:22px;margin-bottom:4px}
+    .toast{position:fixed;top:-80px;left:50%;transform:translateX(-50%);background:var(--green);padding:10px 16px;border-radius:10px;transition:top .5s;z-index:1000}
+    .toast.err{background:var(--red)}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Withdraw Points</div>
+
+    <div class="balance">
+      <div class="lab">Your Balance</div>
+      <div class="pts" id="pts">0</div>
+      <div class="usd">≈ $<span id="usd">0.00</span></div>
+    </div>
+
+    <div class="card">
+      <div class="form">
+        <div class="field">
+          <label class="label">Method</label>
+          <select id="method" class="select">
+            <option value="USDT (TRC20)">USDT (TRC20)</option>
+            <option value="BTC">BTC</option>
+            <option value="BNB (BEP20)">BNB (BEP20)</option>
+            <option value="Bkash">Bkash</option>
+            <option value="Nagad">Nagad</option>
+            <option value="UPI">UPI</option>
+            <option value="Paytm">Paytm</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Amount (Points)</label>
+          <input id="amount" type="number" min="1000" step="100" class="input" placeholder="Min 1000" />
+        </div>
+        <div class="field">
+          <label class="label" id="addr-label">Payment address/ID</label>
+          <input id="address" class="input" placeholder="Enter your wallet/address/ID" />
+          <div class="hint" id="addr-hint">For USDT (TRC20), paste your TRC20 address. For Bkash/Nagad, paste your number.</div>
+        </div>
+        <button id="submit" class="btn">Submit Request</button>
+        <div class="help">Note: Minimum 1000 points. Processing time depends on method and queue.</div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="stat"><div class="v" id="sum-pending">0</div><div class="k">Pending</div></div>
+      <div class="stat"><div class="v" id="sum-approved">0</div><div class="k">Approved</div></div>
+      <div class="stat"><div class="v" id="sum-rejected">0</div><div class="k">Rejected</div></div>
+    </div>
+
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div style="font-weight:800">Withdrawal History</div>
+      <div class="help">Latest first</div>
+    </div>
+
+    <div id="list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
+  </div>
+
+  <div id="toast" class="toast">Saved</div>
+
+  <div class="nav">
+    <a href="home.html"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="tasks.html"><i class="fas fa-list-check"></i><span>Tasks</span></a>
+    <a href="premium.html"><i class="fas fa-star"></i><span>Premium</span></a>
+    <a href="withdraw.html" class="active"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+    <a href="profile.html"><i class="fas fa-user"></i><span>Profile</span></a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, push, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOEZ-yOQA0P_ZRHG5ppvz1UpnYGN-MMXM",
+      authDomain: "earnhub-a58e5.firebaseapp.com",
+      databaseURL: "https://earnhub-a58e5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "earnhub-a58e5",
+      storageBucket: "earnhub-a58e5.firebasestorage.app",
+      messagingSenderId: "644080542691",
+      appId: "1:644080542691:web:dae120e0f671f991cf36d6",
+      measurementId: "G-G7CJZ0BV0K"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // UI refs
+    const ptsEl = document.getElementById('pts');
+    const usdEl = document.getElementById('usd');
+    const methodEl = document.getElementById('method');
+    const amountEl = document.getElementById('amount');
+    const addressEl = document.getElementById('address');
+    const submitBtn = document.getElementById('submit');
+    const listEl = document.getElementById('list');
+    const sumPendingEl = document.getElementById('sum-pending');
+    const sumApprovedEl = document.getElementById('sum-approved');
+    const sumRejectedEl = document.getElementById('sum-rejected');
+    const toast = document.getElementById('toast');
+    const addrLabel = document.getElementById('addr-label');
+    const addrHint = document.getElementById('addr-hint');
+
+    const MIN_WITHDRAW_POINTS = 1000;
+
+    function showToast(msg, err=false){
+      toast.textContent = msg; toast.classList.toggle('err', !!err);
+      toast.style.top = '16px';
+      clearTimeout(toast._t); toast._t = setTimeout(()=> toast.style.top = '-80px', 2000);
+    }
+
+    function updateAddrHelp(){
+      const m = methodEl.value;
+      if (m.includes('USDT')) { addrLabel.textContent='TRC20 Address'; addrHint.textContent='Paste your USDT (TRC20) address.'; }
+      else if (m === 'BTC') { addrLabel.textContent='BTC Address'; addrHint.textContent='Paste your BTC address.'; }
+      else if (m.includes('BNB')) { addrLabel.textContent='BEP20 Address'; addrHint.textContent='Paste your BNB (BEP20) address.'; }
+      else if (m === 'Bkash' || m === 'Nagad') { addrLabel.textContent=`${m} Number`; addrHint.textContent=`Enter your ${m} mobile number.`; }
+      else { addrLabel.textContent='Payment address/ID'; addrHint.textContent='Enter your payment address or ID.'; }
+    }
+    methodEl.addEventListener('change', updateAddrHelp);
+    updateAddrHelp();
+
+    let me = null; // user data
+    let history = []; // user's withdrawal history (array)
+
+    function renderBalance(){
+      const p = me?.points||0;
+      ptsEl.textContent = p.toLocaleString();
+      usdEl.textContent = (p/1000).toFixed(2);
+    }
+
+    function renderSummary(){
+      const pending = history.filter(h=> h.status==='pending').length;
+      const approved = history.filter(h=> h.status==='approved').length;
+      const rejected = history.filter(h=> h.status==='rejected').length;
+      sumPendingEl.textContent = pending;
+      sumApprovedEl.textContent = approved;
+      sumRejectedEl.textContent = rejected;
+    }
+
+    function renderList(){
+      listEl.innerHTML = '';
+      if (history.length===0){
+        const empty = document.createElement('div');
+        empty.className = 'card';
+        empty.textContent = 'No withdrawal history.';
+        listEl.appendChild(empty); return;
+      }
+      history.forEach(h=>{
+        const row = document.createElement('div'); row.className = 'row';
+        const st = (h.status||'pending').toLowerCase();
+        const stClass = st==='approved'?'approved': st==='rejected'?'rejected': st==='cancelled'?'cancelled':'pending';
+        row.innerHTML = `
+          <div class="left">
+            <div class="method">${h.method||'-'}</div>
+            <div class="meta">${h.address||''}</div>
+            <div class="meta">${h.timestamp ? new Date(h.timestamp).toLocaleString() : ''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="font-weight:900">${h.points||0} pts</div>
+            <div class="status ${stClass}">${(h.status||'').toUpperCase()}</div>
+            <div class="actions"></div>
+          </div>
+        `;
+        const actions = row.querySelector('.actions');
+        if (st==='pending'){
+          const cancel = document.createElement('button');
+          cancel.className='btn-sm red';
+          cancel.textContent='Cancel';
+          cancel.addEventListener('click', ()=> cancelRequest(h.id, h.points));
+          actions.appendChild(cancel);
+        }
+        listEl.appendChild(row);
+      });
+    }
+
+    async function submit(){
+      const user = auth.currentUser; if (!user) return;
+      const amount = parseInt(amountEl.value || '0', 10);
+      const method = methodEl.value;
+      const address = (addressEl.value || '').trim();
+
+      if (!amount || amount < MIN_WITHDRAW_POINTS){ showToast('Min 1000 points required', true); return; }
+      if (amount > (me?.points||0)){ showToast('Insufficient balance', true); return; }
+      if (!address){ showToast('Enter address/ID', true); return; }
+
+      submitBtn.disabled = true;
+      try {
+        const globalRef = ref(db, 'withdrawalHistory');
+        const rec = {
+          userId: user.uid,
+          points: amount,
+          method, address,
+          status: 'pending',
+          timestamp: serverTimestamp()
+        };
+        const idRef = await push(globalRef, rec);
+        await update(ref(db, 'users/'+user.uid), {
+          points: (me?.points||0) - amount,
+          ['withdrawalHistory/'+idRef.key]: rec
+        });
+        amountEl.value=''; addressEl.value='';
+        showToast('Request submitted');
+      } catch(e){
+        console.error(e); showToast('Submit failed', true);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function cancelRequest(id, amount){
+      const user = auth.currentUser; if (!user) return;
+      try {
+        // Update global and user record to cancelled
+        await update(ref(db, 'withdrawalHistory/'+id), { status:'cancelled' });
+        await update(ref(db, `users/${user.uid}/withdrawalHistory/${id}`), { status:'cancelled' });
+        // Refund points
+        await update(ref(db, 'users/'+user.uid), { points: (me?.points||0) + (amount||0) });
+        showToast('Request cancelled & refunded');
+      } catch(e){
+        console.error(e); showToast('Cancel failed', true);
+      }
+    }
+
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) { window.location.href='login.html'; return; }
+      // Load user profile and withdrawals
+      onValue(ref(db, 'users/'+user.uid), (s)=>{
+        me = s.val()||{};
+        renderBalance();
+
+        const list = [];
+        if (me.withdrawalHistory){
+          for(const [id, v] of Object.entries(me.withdrawalHistory)){
+            list.push({ id, ...(v||{}) });
+          }
+          list.sort((a,b)=> (b.timestamp||0)-(a.timestamp||0));
+        }
+        history = list;
+        renderSummary();
+        renderList();
+      });
+    });
+
+    submitBtn.addEventListener('click', submit);
+  </script>
+</body>
+</html>
