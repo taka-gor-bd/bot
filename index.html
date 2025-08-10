@@ -1,161 +1,259 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useAuth } from "@/components/auth-provider"
-import { db } from "@/lib/firebase"
-import { onValue, ref, update, serverTimestamp } from "firebase/database"
-import { Button } from "@/components/ui/button"
-
-const MAX_PLAYS_PER_DAY = 5
-const GAME_DURATION_SECONDS = 30
-const NUM_CELLS = 25
-const POINTS_PER_WIN = 50
-
-export default function GamesPage() {
-  const { user } = useAuth()
-  const [playsLeft, setPlaysLeft] = useState(MAX_PLAYS_PER_DAY)
-  const [timer, setTimer] = useState(0)
-  const [running, setRunning] = useState(false)
-  const [grid, setGrid] = useState<number[]>([])
-  const [next, setNext] = useState(1)
-  const [wins, setWins] = useState(0)
-  const [losses, setLosses] = useState(0)
-
-  useEffect(() => {
-    if (!user) return
-    const uRef = ref(db, `users/${user.uid}`)
-    const unsub = onValue(uRef, (s) => {
-      const d = s.val() || {}
-      const today = new Date().toDateString()
-      if (d.gameLastPlayDate !== today) {
-        setPlaysLeft(MAX_PLAYS_PER_DAY)
-        setWins(0)
-        setLosses(0)
-        update(uRef, {
-          gamePlaysLeft: MAX_PLAYS_PER_DAY,
-          dailyWins: 0,
-          dailyLosses: 0,
-          gameLastPlayDate: today,
-        })
-      } else {
-        setPlaysLeft(d.gamePlaysLeft ?? MAX_PLAYS_PER_DAY)
-        setWins(d.dailyWins || 0)
-        setLosses(d.dailyLosses || 0)
-      }
-    })
-    return () => unsub()
-  }, [user])
-
-  const shuffle = (arr: number[]) => {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>EarnHub — Earn by Tasks, Ads, Games & Referrals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root{
+      --primary:#6a11cb; --secondary:#2575fc; --bg:#0d0d0d; --card:#111113; --muted:#a1a1aa;
+      --amber:#ff9f0a; --green:#34c759; --blue:#0a84ff; --border:#252527;
     }
-    return arr
-  }
-
-  const start = async () => {
-    if (!user) return
-    if (playsLeft <= 0) return
-    const cells = shuffle([...Array(NUM_CELLS)].map((_, i) => i + 1))
-    setGrid(cells)
-    setNext(1)
-    setTimer(GAME_DURATION_SECONDS)
-    setRunning(true)
-    await update(ref(db, `users/${user.uid}`), { gamePlaysLeft: playsLeft - 1 })
-  }
-
-  useEffect(() => {
-    if (!running) return
-    if (timer <= 0) {
-      end(false)
-      return
-    }
-    const t = setTimeout(() => setTimer((x) => x - 1), 1000)
-    return () => clearTimeout(t)
-  }, [running, timer])
-
-  const clickCell = (n: number) => {
-    if (!running) return
-    if (n === next) {
-      setGrid((g) => g.filter((x) => x !== n))
-      setNext((x) => x + 1)
-      if (n === NUM_CELLS) end(true)
-    }
-  }
-
-  const end = async (success: boolean) => {
-    setRunning(false)
-    if (!user) return
-    const uRef = ref(db, `users/${user.uid}`)
-    if (success) {
-      setWins((w) => w + 1)
-      await update(uRef, {
-        dailyWins: wins + 1,
-        points: await new Promise<number>((res) => {
-          onValue(
-            uRef,
-            (s) => {
-              res((s.val()?.points || 0) + POINTS_PER_WIN)
-            },
-            { onlyOnce: true },
-          )
-        }),
-      })
-      await update(uRef, {
-        [`activity/${Date.now()}`]: {
-          title: "Game Win",
-          points: POINTS_PER_WIN,
-          icon: "fa-gamepad",
-          color: "#34c759",
-          timestamp: serverTimestamp(),
-        },
-      })
-    } else {
-      setLosses((l) => l + 1)
-      await update(uRef, { dailyLosses: losses + 1 })
-    }
-  }
-
-  return (
-    <div className="mx-auto max-w-md px-4 py-5">
-      <h1 className="mb-4 text-center text-2xl font-bold">Number Sequence Challenge</h1>
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <div className="rounded-xl border p-3 text-center">
-          <div className="text-2xl font-bold">{playsLeft}</div>
-          <div className="text-xs text-muted-foreground">Plays Left</div>
-        </div>
-        <div className="rounded-xl border p-3 text-center">
-          <div className="text-2xl font-bold">{timer}s</div>
-          <div className="text-xs text-muted-foreground">Time Left</div>
-        </div>
-        <div className="rounded-xl border p-3 text-center">
-          <div className="text-2xl font-bold">{next}</div>
-          <div className="text-xs text-muted-foreground">Next Number</div>
-        </div>
-      </div>
-      <div className="mx-auto grid aspect-square max-w-xs grid-cols-5 gap-2">
-        {Array.from({ length: NUM_CELLS }).map((_, i) => {
-          const n = i + 1
-          const present = grid.includes(n)
-          return (
-            <button
-              key={n}
-              onClick={() => present && clickCell(n)}
-              className={`flex items-center justify-center rounded-md border text-sm font-semibold ${
-                present ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {n}
-            </button>
-          )
-        })}
-      </div>
-      <div className="mt-4">
-        <Button className="w-full" onClick={start} disabled={running || playsLeft <= 0}>
-          {playsLeft <= 0 ? "No plays left" : running ? "Running..." : "Start Game"}
-        </Button>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);color:#fff;line-height:1.45}
+    a{text-decoration:none;color:inherit}
+    /* Header */
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
+    .brand{font-weight:800;font-size:22px;letter-spacing:.2px;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .nav-actions{display:flex;gap:10px}
+    .btn{border:1px solid var(--border);background:#141416;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn.primary{border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--secondary))}
+    .btn.ghost{background:transparent}
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1.1fr;gap:18px;padding:26px 0}
+    .hero-inner{display:flex;flex-direction:column;gap:14px}
+    .eyebrow{font-size:12px;display:inline-flex;align-items:center;gap:8px;color:#ddd}
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--green)}
+    .h1{font-size:32px;font-weight:900;line-height:1.15}
+    .h1 .grad{background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .sub{color:var(--muted);font-size:14px}
+    .cta{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+    .hero-art{width:100%;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#0f0f10}
+    .hero-art img{width:100%;height:auto;display:block}
+    /* Features */
+    .section{padding:26px 0}
+    .section-title{font-size:22px;font-weight:800;margin-bottom:12px}
+    .grid-4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(min-width:860px){ .hero{grid-template-columns:1.1fr .9fr} .grid-4{grid-template-columns:repeat(4,1fr)} }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .feat{display:flex;flex-direction:column;gap:8px}
+    .iconWrap{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .feat h3{font-size:16px}
+    .feat p{font-size:13px;color:var(--muted)}
+    /* Counters */
+    .counters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .counter .num{font-size:22px;font-weight:900}
+    .counter .lab{font-size:12px;color:var(--muted)}
+    /* Carousel */
+    .carousel{position:relative;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0f0f10}
+    .track{display:flex;transition:transform .5s ease}
+    .slide{min-width:100%;padding:12px}
+    .slide img{width:100%;height:auto;border-radius:12px;border:1px solid var(--border)}
+    .dots{display:flex;gap:6px;justify-content:center;padding:8px}
+    .dotb{width:8px;height:8px;border-radius:999px;background:#2a2a2e}
+    .dotb.active{background:linear-gradient(135deg,var(--primary),var(--secondary))}
+    /* Split */
+    .split{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:860px){ .split{grid-template-columns:1.1fr .9fr} }
+    .list{display:flex;flex-direction:column;gap:10px}
+    .li{display:flex;gap:10px;align-items:flex-start}
+    .li i{color:var(--green);margin-top:3px}
+    .li div{font-size:14px}
+    /* Footer */
+    footer{border-top:1px solid var(--border);margin-top:30px}
+    .foot{padding:16px 0;display:grid;grid-template-columns:1fr;gap:10px;color:var(--muted);font-size:13px}
+    @media(min-width:860px){ .foot{grid-template-columns:1fr auto auto} }
+    .foot a{color:#cbd5ff}
+    .badges{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;background:#121214}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">EarnHub</div>
+      <div class="nav-actions">
+        <a class="btn ghost" href="login.html">লগইন</a>
+        <a class="btn primary" href="login.html">Join Now</a>
       </div>
     </div>
-  )
-}
+  </header>
+
+  <main>
+    <section class="container hero">
+      <div class="hero-inner">
+        <div class="eyebrow"><span class="dot" aria-hidden="true"></span> রিয়েলটাইম রিওয়ার্ড • ট্রাস্টেড প্ল্যাটফর্ম</div>
+        <h1 class="h1">
+          কাজ করুন, পয়েন্ট জিতুন — <span class="grad">টাস্ক, এ্যাড, গেম</span> আর রেফারেল থেকে আয়
+        </h1>
+        <p class="sub">
+          প্রতিদিন নতুন টাস্ক, ভিডিও এ্যাড দেখলেই বোনাস, আর গেম জিতে ইনস্ট্যান্ট পয়েন্ট। রেফার করলেই ৫০ পয়েন্ট।
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="login.html"><i class="fas fa-bolt"></i> শুরু করুন</a>
+          <a class="btn" href="premium.html"><i class="fas fa-crown"></i> প্রিমিয়াম সুবিধা দেখুন</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <img src="/placeholder.svg?height=560&width=920" alt="EarnHub preview screens" />
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-title">কেন EarnHub?</div>
+      <div class="grid-4">
+        <div class="card feat">
+          <div class="iconWrap" style="background: rgba(106,17,203,.18); color: var(--primary);"><i class="fas fa-list-check"></i></div>
+          <h3>টাস্ক করে আয়</h3>
+          <p>সোশ্যাল/এ্যাপ/অন্য ক্যাটাগরির টাস্ক — টাইমার শেষ হলেই পয়েন্ট অ্যাড।</p>
+        </div>
+        <div class="card feat">
+          <div class="iconWrap" style="background: rgba(255,59,48,.18); color:#ff3b30;"><i class="fas fa-tv"></i></div>
+          <h3>ভিডিও এ্যাড বোনাস</h3>
+          <p>প্রতি এ্যাডে ১০ পয়েন্ট, দৈনিক নির্দিষ্ট লিমিট।</p>
+        </div>
+        <div class="card feat">
+          <div class="iconWrap" style="background: rgba(52,199,89,.18); color: var(--green);"><i class="fas fa-gamepad"></i></div>
+          <h3>হার্ড গেম চ্যালেঞ্জ</h3>
+          <p>৩০ সেকেন্ডে মেমরি ম্যাচ সম্পূর্ণ করুন — জিতলে ৫০ পয়েন্ট।</p>
+        </div>
+        <div class="card feat">
+          <div class="iconWrap" style="background: rgba(10,132,255,.18); color: var(--blue);"><i class="fas fa-users"></i></div>
+          <h3>রেফারেলে বোনাস</h3>
+          <p>প্রতি সফল রেফারে ৫০ পয়েন্ট আপনি এবং আপনার ফ্রেন্ড—দুজনই।</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="counters">
+        <div class="card counter" data-target="5000">
+          <div class="num">0</div>
+          <div class="lab">রেজিস্টার্ড ইউজার</div>
+        </div>
+        <div class="card counter" data-target="120000">
+          <div class="num">0</div>
+          <div class="lab">টোটাল পয়েন্ট এক্সচেঞ্জড</div>
+        </div>
+        <div class="card counter" data-target="4.9">
+          <div class="num">0</div>
+          <div class="lab">ইউজার রেটিং</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-title">অ্যাপ স্ক্রিনশট</div>
+      <div class="carousel" aria-roledescription="carousel" aria-label="App screenshots">
+        <div class="track" id="track">
+          <div class="slide"><img src="/placeholder.svg?height=640&width=1140" alt="Home screen" /></div>
+          <div class="slide"><img src="/placeholder.svg?height=640&width=1140" alt="Tasks screen" /></div>
+          <div class="slide"><img src="/placeholder.svg?height=640&width=1140" alt="Premium plans" /></div>
+        </div>
+        <div class="dots" aria-hidden="true">
+          <div class="dotb active"></div><div class="dotb"></div><div class="dotb"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section split">
+      <div class="card">
+        <div class="section-title">কীভাবে কাজ করে?</div>
+        <div class="list">
+          <div class="li"><i class="fas fa-check-circle"></i><div>১) Join/লগইন করে প্রোফাইল সেটআপ করুন।</div></div>
+          <div class="li"><i class="fas fa-check-circle"></i><div>২) Tasks/Ads/Games থেকে পছন্দমতো আয় করুন।</div></div>
+          <div class="li"><i class="fas fa-check-circle"></i><div>৩) টাইমার শেষে পয়েন্ট অটো-অ্যাড; ওয়ালেটে দেখুন।</div></div>
+          <div class="li"><i class="fas fa-check-circle"></i><div>৪) মিনিমাম পয়েন্ট হলে Withdraw রিকোয়েস্ট দিন।</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn primary" href="login.html"><i class="fas fa-user-plus"></i> Join Free</a>
+          <a class="btn" href="home.html"><i class="fas fa-circle-play"></i> ডেমো দেখুন</a>
+        </div>
+      </div>
+      <div class="card">
+        <img src="/placeholder.svg?height=520&width=920" alt="Wallet & Withdraw" style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border)" />
+        <div style="font-size:13px;color:var(--muted);margin-top:8px">ফাস্ট পে-আউট • মাল্টি-পেমেন্ট অপশনস • রিয়েলটাইম হিস্টোরি</div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-title">বিশ্বাসের ব্যাজ</div>
+      <div class="badges">
+        <div class="badge"><i class="fas fa-shield-halved"></i> Secure Auth</div>
+        <div class="badge"><i class="fas fa-bolt"></i> Real-time DB</div>
+        <div class="badge"><i class="fas fa-crown"></i> Premium & Blue Tick</div>
+        <div class="badge"><i class="fas fa-trophy"></i> Leaderboard</div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="font-weight:800;font-size:18px">আজই শুরু করুন — ফ্রি রেজিস্ট্রেশন</div>
+        <div style="display:flex;gap:10px">
+          <a class="btn" href="login.html">লগইন</a>
+          <a class="btn primary" href="login.html">Join Now</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container foot">
+      <div>© <span id="y"></span> EarnHub. All rights reserved.</div>
+      <div style="display:flex;gap:12px;justify-content:flex-start">
+        <a href="leaderboard.html">Leaderboard</a>
+        <a href="premium.html">Premium</a>
+        <a href="withdraw.html">Withdraw</a>
+        <a href="profile.html">Profile</a>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-start">
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // counters animate on view
+    const counters = document.querySelectorAll('.counter');
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if (entry.isIntersecting){
+          const el = entry.target;
+          const target = parseFloat(el.dataset.target||'0');
+          const numEl = el.querySelector('.num');
+          let cur = 0;
+          const steps = 30;
+          const step = target/steps;
+          const timer = setInterval(()=>{
+            cur += step;
+            if (cur >= target){ cur = target; clearInterval(timer); }
+            numEl.textContent = (target % 1 === 0) ? Math.floor(cur) : cur.toFixed(1);
+          }, 30);
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: .3 });
+    counters.forEach(c=> io.observe(c));
+
+    // carousel
+    const track = document.getElementById('track');
+    const dots = Array.from(document.querySelectorAll('.dotb'));
+    let idx = 0;
+    function go(i){
+      idx = i % dots.length;
+      track.style.transform = 'translateX(' + (-idx*100) + '%)';
+      dots.forEach((d,j)=> d.classList.toggle('active', j===idx));
+    }
+    setInterval(()=> go(idx+1), 3000);
+  </script>
+</body>
+            </html>
